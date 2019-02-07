@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD//EN"
+        "http://hibernate.sourceforge.net/hibernate-mapping-2.0.dtd">
+<hibernate-mapping auto-import="true"
+	package="com.telstra.olb.tegcbm.job.migration.model">
+	<class name="OLBMigrationActivity" table="OLB_MIGRATION_ACTIVITY"
+		lazy="false">
+		<id name="id" column="ID">
+			<generator class="native" />
+		</id>
+		<property name="activityName" column="ACTIVITY_NAME" type="string"
+			not-null="true" length="100" />
+	</class>
+
+</hibernate-mapping>

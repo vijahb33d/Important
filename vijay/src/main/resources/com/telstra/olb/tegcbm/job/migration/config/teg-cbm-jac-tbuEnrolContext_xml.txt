@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans default-lazy-init="true">
+
+	<!-- Migration Manager -->
+	<bean id="cbmjac.enrolTBU.manager" class="com.telstra.olb.tegcbm.job.core.DefaultManagerImpl">
+		<property name="usage">
+			<value><![CDATA[migrate [companyList={list of companies seperated by commas}] 
+									[migrationSize={size to retrieve}] 
+									[status={list of statuses seperated by commas}] 
+									]]></value>
+		</property>
+		<property name="jobs">
+			<list>
+				<ref bean="cbmjac.tbuEnrol.hierarchy.cleanup.activity"/>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="cbmjac.enrolTBUReport.manager" class="com.telstra.olb.tegcbm.job.core.DefaultManagerImpl">
+		<property name="usage">
+			<value><![CDATA[enrolTBUReport [status={list of statuses seperated by commas}] ]]></value>
+		</property>
+		<property name="jobs">
+			<list>
+				<ref bean="cbmjac.tbuEnrol.report.activity"/>
+			</list>
+		</property>
+	</bean>
+	
+	<!-- Migration Job Listeners -->
+	<bean id="cbmjac.job.processing" parent="cbmjac.activity.status.processing" class="com.telstra.olb.tegcbm.job.migration.listeners.MigrationActivityStatusListener"/>
+	
+	<bean id="cbmjac.job.complete" parent="cbmjac.activity.status.complete" class="com.telstra.olb.tegcbm.job.migration.listeners.MigrationActivityStatusListener"/>
+	
+	<bean id="cbmjac.job.error" parent="cbmjac.activity.status.error" class="com.telstra.olb.tegcbm.job.migration.listeners.MigrationActivityStatusListener"/>
+	
+	<bean id="cbmjac.migration.activity.inputvalidator" class="com.telstra.olb.tegcbm.job.migration.data.MigrationDataInputValidator">
+		<property name="migrationDao">
+			<ref bean="cm.migrationDAO"/>
+		</property>
+	</bean>
+	
+	<bean id="cbmjac.migration.activity.dataprovider" class="com.telstra.olb.tegcbm.job.migration.data.MigrationDataProvider">
+			<property name="migrationDao">
+				<ref bean="cm.migrationDAO"/>
+			</property>
+	</bean>
+	
+	<!-- =========================== Activity Contexts ======================================== -->
+	<import resource="classpath:/com/telstra/olb/tegcbm/job/migration/config/teg-cbm-jac-profileMigrationActivityContext.xml"/>
+	
+	<!-- import resource="classpath:/com/telstra/olb/tegcbm/job/migration/config/teg-cbm-jac-populateDataContext.xml"/-->
+	
+	<import resource="classpath:/com/telstra/olb/tegcbm/job/migration/config/teg-cbm-jac-preferencesMigrationActivityContext.xml"/>
+	
+	<import resource="classpath:/com/telstra/olb/tegcbm/job/migration/config/teg-cbm-jac-pabMigrationActivityContext.xml"/>
+	
+	<import resource="classpath:/com/telstra/olb/tegcbm/job/migration/config/teg-cbm-jac-hierarchyCleanupActivityContext.xml"/>
+	
+	<import resource="classpath:/com/telstra/olb/tegcbm/job/migration/config/teg-cbm-jac-preferencesCleanupActivityContext.xml"/>
+	
+	<import resource="classpath:/com/telstra/olb/tegcbm/job/migration/config/teg-cbm-jac-pabCleanupActivityContext.xml"/>
+	
+	<import resource="classpath:/com/telstra/olb/tegcbm/job/migration/config/teg-cbm-jac-appPreferencesActivityContext.xml"/>
+	
+	<import resource="classpath:/com/telstra/olb/tegcbm/job/migration/config/teg-cbm-jac-enrolTBUReportActivityContext.xml"/>
+		
+</beans>

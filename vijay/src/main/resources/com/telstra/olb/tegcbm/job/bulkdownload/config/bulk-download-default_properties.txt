@@ -1,0 +1,22 @@
+# =====================================================================================================
+# Default properties for company migration                                                            #
+# =====================================================================================================
+
+# Hibernate Settings
+hibernate.properties=bd.properties
+hibernate.dialect=org.hibernate.dialect.Oracle9Dialect
+hibernate.show_sql=false
+hibernate.jdbc.batch_size=500
+hibernate.connection.release_mode=auto
+
+bd.transaction.manager.lookupClass=net.sf.hibernate.transaction.WebSphereTransactionManagerLookup
+
+dataSource.basic.driver=oracle.jdbc.driver.OracleDriver
+dataSource.pool.initialSize=0
+dataSource.pool.maxActive=50
+dataSource.pool.maxIdle=10
+dataSource.pool.minIdle=0
+dataSource.pool.maxWait=60000
+dataSource.pool.removeAbandoned=false
+dataSource.pool.removeAbandonedTimeout=300
+dataSource.pool.logAbandoned=false

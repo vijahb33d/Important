@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans default-lazy-init="true">
+
+	<bean
+		id="cbmjac.tcaProfileMigration.manager"
+		class="com.telstra.olb.tegcbm.job.core.DefaultManagerImpl">
+		<property name="usage">
+			<value>
+				<![CDATA[Usage: tcaProfileMigration [-t]
+							Options: 
+								-t		Either R or W (R-Retail Customers | W-Wholesale Customers)]]>
+			</value>
+		</property>
+		<property name="jobs">
+			<list>
+				<ref local="cbmjac.tcaProfileMigration.activity" />
+			</list>
+		</property>
+	</bean>
+
+	<bean
+		id="cbmjac.tcaProfileMigration.activity"
+		class="com.telstra.olb.tegcbm.tca.profile.migration.TCAProfileMigrationActivity">
+		<property name="name">
+			<value>cbmjac.tcaProfileMigration.activity</value>
+		</property>
+		<property name="pdbDAO">
+			<ref local="cbmjac.migrate.tca.activity.pdbProfileDao" />
+		</property>
+		<property name="pdbwbvDAO">
+			<ref local="cbmjac.migrate.tca.activity.pdbwbvProfileDao" />
+		</property>
+		<property name="directoryName">
+			<value>$CM{cbmjac.tca.profile.migrate.directory}</value>
+		</property>
+		<property name="retailInputFileName">
+			<value>$CM{cbmjac.tca.profile.migrate.retailinputFilename}</value>
+		</property>
+		<property name="retailOutputFileName">
+			<value>$CM{cbmjac.tca.profile.migrate.retailoutputFilename}</value>
+		</property>
+		<property name="retailReconFileName">
+			<value>$CM{cbmjac.tca.profile.migrate.retailreconFilename}</value>
+		</property>
+		<property name="wholesaleInputFileName">
+			<value>$CM{cbmjac.tca.profile.migrate.wholesaleinputFilename}</value>
+		</property>
+		<property name="wholesaleOutputFileName">
+			<value>$CM{cbmjac.tca.profile.migrate.wholesaleoutputFilename}</value>
+		</property>
+		<property name="wholesaleReconFileName">
+			<value>$CM{cbmjac.tca.profile.migrate.wholesalereconFilename}</value>
+		</property>
+		<property name="attribs">
+			<value>$CM{cbmjac.tca.profile.migrate.attribs}</value>
+		</property>
+	</bean>
+
+	<bean
+		id="cbmjac.migrate.tca.activity.pdbProfileDao"
+		class="org.springframework.aop.framework.ProxyFactoryBean">
+		<property name="interfaces">
+			<list>
+				<value>com.telstra.olb.tegcbm.tca.profile.migration.dao.TCAProfileMigrationDAO</value>
+			</list>
+		</property>
+		<property name="target">
+			<ref local="cbmjac.migrate.tca.activity.pdbProfileDao.target" />
+		</property>
+	</bean>
+
+	<bean
+		id="cbmjac.migrate.tca.activity.pdbProfileDao.target"
+		class="com.telstra.olb.tegcbm.tca.profile.migration.dao.TCAProfileMigrationDAOSpringJDBCImpl">
+		<property name="jdbcTemplate">
+			<ref bean="cbmjac.pdb.jdbcTemplate" />
+		</property>
+		<property name="attribs">
+			<value>$CM{cbmjac.tca.profile.migrate.attribs}</value>
+		</property>
+	</bean>
+
+	<bean
+		id="cbmjac.migrate.tca.activity.pdbwbvProfileDao"
+		class="org.springframework.aop.framework.ProxyFactoryBean">
+		<property name="interfaces">
+			<list>
+				<value>com.telstra.olb.tegcbm.tca.profile.migration.dao.TCAProfileMigrationDAO</value>
+			</list>
+		</property>
+		<property name="target">
+			<ref local="cbmjac.migrate.tca.activity.pdbwbvProfileDao.target" />
+		</property>
+	</bean>
+
+	<bean
+		id="cbmjac.migrate.tca.activity.pdbwbvProfileDao.target"
+		class="com.telstra.olb.tegcbm.tca.profile.migration.dao.TCAProfileMigrationDAOSpringJDBCImpl">
+		<property name="jdbcTemplate">
+			<ref bean="cbmjac.pdbwbv.jdbcTemplate" />
+		</property>
+		<property name="attribs">
+			<value>$CM{cbmjac.tca.profile.migrate.attribs}</value>
+		</property>
+	</bean>
+
+</beans>

@@ -1,0 +1,208 @@
+/*
+ * Created on Aug 18, 2011
+ *
+ * TODO To change the template for this generated file go to
+ * Window - Preferences - Java - Code Style - Code Templates
+ */
+package com.telstra.olb.tegcbm.job.tbRegnImproved;
+
+import java.rmi.RemoteException;
+import java.sql.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Vector;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.accenture.billfilemanagement.ejb.facade.BFMSessionFacade;
+import com.accenture.billfilemanagement.exception.BFMServiceException;
+import com.accenture.billfilemanagement.exception.InvalidCategoryException;
+import com.accenture.billfilemanagement.exception.InvalidRequestException;
+import com.accenture.billfilemanagement.exception.MissingDataException;
+import com.accenture.billfilemanagement.valueobject.AccountVO;
+import com.accenture.billfilemanagement.valueobject.RequestVO;
+import com.telstra.olb.tegcbm.job.core.Activity;
+import com.telstra.olb.tegcbm.job.core.ActivityException;
+import com.telstra.olb.tegcbm.job.core.IContext;
+import com.telstra.olb.tegcbm.job.tbRegnImproved.dao.TBOlbRegnSpringDao;
+
+/**
+ * @author vijay.ganesh.s
+ *
+ * TODO To change the template for this generated type comment go to
+ * Window - Preferences - Java - Code Style - Code Templates
+ */
+public class TBBufferClientActivity implements Activity {
+	private final Log log = LogFactory.getLog(getClass());
+	private String name;
+	private Activity nextActivity;
+	private TBOlbRegnSpringDao tbOlbSpringDao;
+	private BFMSessionFacade bfmSession;
+	
+	/* (non-Javadoc)
+	 * @see com.telstra.olb.tegcbm.job.core.Activity#execute(com.telstra.olb.tegcbm.job.core.IContext)
+	 */
+	public void execute(IContext activityContext) throws ActivityException {
+		List paperStatusData = tbOlbSpringDao.processBufferData();
+		for (int i=0 ; i <paperStatusData.size() ; i++) {
+			TBRegistrationEventNotification tbEventNotification = (TBRegistrationEventNotification) paperStatusData.get(i);
+			boolean processBfm = processBFMRequest(tbEventNotification);
+			log.debug("&&&&&& IS BFM Processed &&&&&& "+processBfm);
+		}		
+	}
+
+	/**
+	 * @return requestCreated;
+	 */
+	private boolean processBFMRequest(TBRegistrationEventNotification tbRegEvent) {
+		boolean requestCreated = false;
+		String accountNumber = null;
+		String accountType = null;
+		String preference = tbRegEvent.getPreference();
+		try {
+			if(preference != null) {
+				if(preference.equalsIgnoreCase("all")) {
+					log.debug("###### INSIDE ALL PREFERENCE ###### ");
+					Vector responseBuffer = null;
+					List pdbAccounts = tbOlbSpringDao.getAllAccountData(tbRegEvent.getCustomerId());
+					log.debug("###### ACCOUNT ATTRIBUTES LIST ###### "+pdbAccounts);
+					Vector allAccountList = prepareAllAccountVOList(pdbAccounts,tbRegEvent.getPaperStatusDate(),tbRegEvent.getCustomerId());
+					if(allAccountList != null && allAccountList.size() > 0){
+						responseBuffer = bfmSession.processCoreRequest(allAccountList);
+						if(responseBuffer.size() > 0) {
+							requestCreated = true;
+						}
+					} else {
+						requestCreated = false;
+					}
+				} else if(preference.equalsIgnoreCase("one")) {
+					log.debug("###### INSIDE ONE PREFERENCE ###### ");
+					RequestVO responseBuffer = null;
+					List pdbAccounts = tbOlbSpringDao.getAccountData(tbRegEvent.getAccountNumber());
+					log.debug("###### ACCOUNT ATTRIBUTES LIST ###### "+pdbAccounts);
+					if(pdbAccounts.size() > 0) {
+						accountType = (String) pdbAccounts.get(0);
+					}
+					AccountVO bfmAccount = preparePaperStatus(tbRegEvent.getAccountNumber(),accountType,tbRegEvent.getPaperStatusDate(),tbRegEvent.getCustomerId());
+					responseBuffer = bfmSession.processCoreRequest(bfmAccount);
+					if(responseBuffer != null) {
+						requestCreated = true;
+					} else {
+						requestCreated = false;
+					}
+				}
+			} else {
+				log.error("The Preference is Set to Null");
+			}
+		} catch (MissingDataException mde) {
+			log.error("Missing Data Exception "+mde.getMessage()+" , "+mde.fillInStackTrace());
+			requestCreated = false;
+		} catch (InvalidCategoryException e) {
+			log.error("Invalid Category Exception "+e.getMessage()+" , "+e.fillInStackTrace());
+			requestCreated = false;
+		} catch (InvalidRequestException e) {
+			log.error("Invalid Request Exception "+e.getMessage()+" , "+e.fillInStackTrace());
+			requestCreated = false;
+		} catch (BFMServiceException e) {
+			log.error("BFM Service Exception "+e.getMessage()+" , "+e.fillInStackTrace());
+			requestCreated = false;
+		} catch (RemoteException e) {
+			log.error("Remote Exception "+e.getMessage()+" , "+e.fillInStackTrace());
+			requestCreated = false;
+		}
+		return requestCreated;
+	}
+
+	/**
+	 * @param pdbAccounts
+	 * @return
+	 */
+	private Vector prepareAllAccountVOList(List pdbAccounts,Date paperDate,String cidn) throws MissingDataException  {
+		Vector bfmVector = null;
+		if(pdbAccounts.size() > 0) {
+			bfmVector = new Vector();
+			for (int i = 0 ; i < pdbAccounts.size() ; i++) {
+				String accountString = (String) pdbAccounts.get(i);
+				String[] accountAttribute = accountString.split(",");
+				AccountVO bfmAccount = preparePaperStatus(accountAttribute[0],accountAttribute[1],paperDate,cidn);
+				bfmVector.add(bfmAccount);
+			}
+		}
+		return bfmVector;
+	}
+
+	/**
+	 * @param accountNumber
+	 * @param accountType
+	 * @return
+	 */
+	private AccountVO preparePaperStatus(String accountNumber, String accountType,Date paperDate,String cidn) throws MissingDataException {
+		log.debug("Inside the preparePaperStatus for AccNo "+accountNumber+", accType "+accountType+", paperDate "+paperDate);
+		AccountVO accVo = new AccountVO();
+		accVo.setAccNumber(accountNumber);
+		accVo.setAccType(accountType);
+		accVo.setClientSys(AccountVO.SYSTEM_POST_BILL);
+		accVo.setClientAction(AccountVO.CLIENT_ACTION_PAPER_OFF);
+		accVo.setFutureDate(paperDate.toString());
+		accVo.setUsername("E"+cidn+"S0");
+		accVo.setEcsid("E"+cidn+"S0");
+		return accVo;
+	}
+
+	/* (non-Javadoc)
+	 * @see com.telstra.olb.tegcbm.job.core.Activity#getData(com.telstra.olb.tegcbm.job.core.IContext)
+	 */
+	public Iterator getData(IContext activityContext) {
+		return null;
+	}
+
+	/**
+	 * @param name The name to set.
+	 */
+	public void setName(String name) {
+		this.name = name;
+	}
+	/**
+	 * @param nextActivity The nextActivity to set.
+	 */
+	public void setNextActivity(Activity nextActivity) {
+		this.nextActivity = nextActivity;
+	}
+	/**
+	 * @return Returns the name.
+	 */
+	public String getName() {
+		return name;
+	}
+	/**
+	 * @return Returns the nextActivity.
+	 */
+	public Activity getNextActivity() {
+		return nextActivity;
+	}
+	/**
+	 * @return Returns the tbOlbSpringDao.
+	 */
+	public TBOlbRegnSpringDao getTbOlbSpringDao() {
+		return tbOlbSpringDao;
+	}
+	/**
+	 * @param tbOlbSpringDao The tbOlbSpringDao to set.
+	 */
+	public void setTbOlbSpringDao(TBOlbRegnSpringDao tbOlbSpringDao) {
+		this.tbOlbSpringDao = tbOlbSpringDao;
+	}
+	/**
+	 * @return Returns the bfmSession.
+	 */
+	public BFMSessionFacade getBfmSession() {
+		return bfmSession;
+	}
+	/**
+	 * @param bfmSession The bfmSession to set.
+	 */
+	public void setBfmSession(BFMSessionFacade bfmSession) {
+		this.bfmSession = bfmSession;
+	}
+}

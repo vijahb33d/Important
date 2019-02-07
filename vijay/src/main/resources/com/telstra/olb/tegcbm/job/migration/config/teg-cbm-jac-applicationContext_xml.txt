@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans default-lazy-init="true">
+	<bean id="cm.propertiesHolder"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="ignoreResourceNotFound">
+			<value>true</value>
+		</property>
+		<property name="placeholderPrefix" value="$CM{" />
+		<property name="locations">
+			<list>
+				<value>classpath:/com/telstra/olb/tegcbm/job/migration/config/company-migration-default.properties</value>
+				<value>classpath:/company-migration.properties</value>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id= "cbmjac.activity.status.processing" class="com.telstra.olb.tegcbm.job.migration.listeners.DefaultActivityStatusListener">
+		<property name="activityStatus">
+			<bean class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean">
+				<property name="staticField">
+					<value>com.telstra.olb.tegcbm.job.core.ActivityStatus.STATUS_PROCESSING</value>
+				</property>
+			</bean>
+		</property>
+		<property name="migrationDao">
+			<ref bean="cm.migrationDAO"/>
+		</property>
+	</bean>
+	
+	<bean id= "cbmjac.activity.status.complete" class="com.telstra.olb.tegcbm.job.migration.listeners.DefaultActivityStatusListener">
+		<property name="activityStatus">
+			<bean class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean">
+				<property name="staticField">
+					<value>com.telstra.olb.tegcbm.job.core.ActivityStatus.STATUS_COMPLETE</value>
+				</property>
+			</bean>
+		</property>
+		<property name="migrationDao">
+			<ref bean="cm.migrationDAO"/>
+		</property>
+	</bean>
+	
+	<bean id= "cbmjac.activity.status.error" class="com.telstra.olb.tegcbm.job.migration.listeners.ErrorActivityStatusListener">
+		<property name="activityStatus">
+			<bean class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean">
+				<property name="staticField">
+					<value>com.telstra.olb.tegcbm.job.core.ActivityStatus.STATUS_ERROR</value>
+				</property>
+			</bean>
+		</property>
+		<property name="migrationDao">
+			<ref bean="cm.migrationDAO"/>
+		</property>
+	</bean>
+	
+	<bean id="cbmjac.jdbc.DataSource" class="org.apache.commons.dbcp.BasicDataSource" abstract="true" destroy-method="close" depends-on="cm.propertiesHolder">
+		<property name="driverClassName">
+			<value>$CM{dataSource.basic.driver}</value>
+		</property>
+		<property name="initialSize">
+    		<value>$CM{dataSource.pool.initialSize}</value>
+  		</property>
+  		<property name="maxActive">
+    		<value>$CM{dataSource.pool.maxActive}</value>
+  		</property>
+  		<property name="maxIdle">
+    		<value>$CM{dataSource.pool.maxIdle}</value>
+  		</property>
+  		<property name="minIdle">
+    		<value>$CM{dataSource.pool.minIdle}</value>
+  		</property>
+  		<property name="maxWait">
+    		<value>$CM{dataSource.pool.maxWait}</value>
+  		</property>
+  		<property name="removeAbandoned">
+  			<value>$CM{dataSource.pool.removeAbandoned}</value>
+  		</property>
+  		<property name="removeAbandonedTimeout">
+  			<value>$CM{dataSource.pool.removeAbandonedTimeout}</value>
+  		</property>
+  		<property name="logAbandoned">
+  			<value>$CM{dataSource.pool.logAbandoned}</value>
+  		</property>
+	</bean>
+	
+	<bean id="cbmjac.olb.jdbc.DataSource" parent="cbmjac.jdbc.DataSource" lazy-init="true">
+		<property name="url"><value>$CM{cm.olb.dataSource.basic.url}</value></property>
+		<property name="username"><value>$CM{cm.olb.dataSource.basic.username}</value></property>
+		<property name="password"><value>$CM{cm.olb.dataSource.basic.password}</value></property>
+	</bean>
+	
+	<bean id="cbmjac.olb.jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+		<property name="dataSource"><ref bean="cbmjac.olb.jdbc.DataSource"/></property>
+	</bean>
+	
+	<bean id="cbmjac.pdb.jdbc.DataSource" parent="cbmjac.jdbc.DataSource" lazy-init="true">
+		<property name="url"><value>$CM{cm.pdb.dataSource.basic.url}</value></property>
+		<property name="username"><value>$CM{cm.pdb.dataSource.basic.username}</value></property>
+		<property name="password"><value>$CM{cm.pdb.dataSource.basic.password}</value></property>
+	</bean>
+	
+	<bean id="cbmjac.pdb.jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+		<property name="dataSource"><ref bean="cbmjac.pdb.jdbc.DataSource"/></property>
+	</bean>
+
+	<bean id="cbmjac.pdbwbv.jdbc.DataSource" parent="cbmjac.jdbc.DataSource" lazy-init="true">
+		<property name="url"><value>$CM{cm.pdbwbv.dataSource.basic.url}</value></property>
+		<property name="username"><value>$CM{cm.pdbwbv.dataSource.basic.username}</value></property>
+		<property name="password"><value>$CM{cm.pdbwbv.dataSource.basic.password}</value></property>
+	</bean>
+	
+	<bean id="cbmjac.pdbwbv.jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+		<property name="dataSource"><ref bean="cbmjac.pdbwbv.jdbc.DataSource"/></property>
+	</bean>
+	
+	<bean id="cbmjac.cbm.jdbc.DataSource" parent="cbmjac.jdbc.DataSource" lazy-init="true">
+		<property name="url"><value>$CM{cm.edx.dataSource.basic.url}</value></property>
+		<property name="username"><value>$CM{cm.edx.dataSource.basic.username}</value></property>
+		<property name="password"><value>$CM{cm.edx.dataSource.basic.password}</value></property>
+	</bean>
+	
+	<bean id="cbmjac.cbm.jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+		<property name="dataSource"><ref bean="cbmjac.cbm.jdbc.DataSource"/></property>
+	</bean>
+
+	<bean id="cbmjac.billpay.jdbc.DataSource" parent="cbmjac.jdbc.DataSource" lazy-init="true">
+		<property name="url"><value>$CM{cm.billpay.dataSource.basic.url}</value></property>
+		<property name="username"><value>$CM{cm.billpay.dataSource.basic.username}</value></property>
+		<property name="password"><value>$CM{cm.billpay.dataSource.basic.password}</value></property>
+	</bean>
+	
+	<bean id="cbmjac.billpay.jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+		<property name="dataSource"><ref bean="cbmjac.billpay.jdbc.DataSource"/></property>
+	</bean>
+	
+	<bean id="cbmjac.task.manager" class="com.telstra.olb.tegcbm.job.concurrency.TaskManager"/>
+	
+	<bean id="cbmjac.task.fixedPool.executor" class="edu.emory.mathcs.backport.java.util.concurrent.Executors" factory-method="newFixedThreadPool">
+		<constructor-arg index="0">
+			<value>$CM{cbmjac.task.fixedPool.executor.threads}</value>
+		</constructor-arg>
+	</bean>
+	
+	<bean id="cbmjac.task.custom.executor" class="edu.emory.mathcs.backport.java.util.concurrent.ThreadPoolExecutor">
+		<constructor-arg index="0">
+			<value>1</value>
+		</constructor-arg>
+		<constructor-arg index="1">
+			<value>$cm{cbmjac.task.custom.executor.numberThreads}</value>
+		</constructor-arg>
+		<constructor-arg index="2">
+			<value>$cm{cbmjac.task.custom.executor.keepAlive}</value>
+		</constructor-arg>
+		<constructor-arg index="3">
+			<bean class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean">
+				<property name="staticField">
+					<value>edu.emory.mathcs.backport.java.util.concurrent.TimeUnit.SECONDS</value>
+				</property>
+			</bean>
+		</constructor-arg>
+		<constructor-arg index="4">
+			<bean class="edu.emory.mathcs.backport.java.util.concurrent.LinkedBlockingQueue">
+				<constructor-arg index="0">
+					<value>$CM{cbmjac.task.custom.executor.queueSize}</value>
+				</constructor-arg>
+			</bean>
+		</constructor-arg>
+	</bean>
+</beans>

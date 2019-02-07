@@ -1,0 +1,111 @@
+/*
+ * Created on Aug 18, 2011
+ *
+ * TODO To change the template for this generated file go to
+ * Window - Preferences - Java - Code Style - Code Templates
+ */
+package com.telstra.olb.tegcbm.job.tbRegnImproved;
+
+import java.io.File;
+import java.io.FilenameFilter;
+import java.util.ArrayList;
+
+
+import javax.mail.MessagingException;
+import org.apache.commons.lang.StringUtils;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.telstra.olb.tegcbm.job.core.ActivityException;
+import com.telstra.olb.tegcbm.job.tbRegnImproved.util.EmailUtil;
+import com.telstra.olb.tegcbm.job.tbRegnImproved.dao.TBOlbRegnSpringDao;
+import com.telstra.olb.tegcbm.job.tbRegnImproved.generator.CSVReportGenerator;
+
+
+/**
+ * @author ramesh.babu.athota
+ *
+ * TODO To change the template for this generated type comment go to
+ * Window - Preferences - Java - Code Style - Code Templates
+ */
+public class TBRegnSendEmailReport {
+	
+	private TBOlbRegnSpringDao tbOlbSpringDao;
+	
+	private final Log log = LogFactory.getLog(getClass());
+	String message 	 = "";
+	String fileContent 	 = "";
+	CSVReportGenerator csvGenerator=new CSVReportGenerator();
+	
+	public void sendEmailReport(String host,String emailAddresses,String from,String subject,String fileName) throws ActivityException
+	{
+		log.debug("Inside the sendEmailReport");
+		boolean flag=false;
+		ArrayList emailList = new ArrayList();
+		if (StringUtils.isNotBlank(emailAddresses)) {
+			log.debug("Email Address ::: "+emailAddresses);
+			if (emailAddresses.indexOf(",") != -1) {
+				String[] emailStringArray = emailAddresses.split(",");
+				for (int i=0; i<emailStringArray.length; i++) {
+					if (StringUtils.isNotBlank(emailStringArray[i]) && !emailList.contains(emailStringArray[i])){
+						log.debug("Individual Email Address ::: "+emailStringArray[i]);
+						if(EmailUtil.isEmailValid(emailStringArray[i]))
+						{
+						 emailList.add(emailStringArray[i]);
+						}
+						else
+						{
+							log.error("Inavalid Email Address ");
+					    	throw new ActivityException(); 
+						}
+					}
+				}
+			} else {
+				if(EmailUtil.isEmailValid(emailAddresses))
+				{
+				  emailList.add(emailAddresses);
+				}
+				else
+				{
+					log.error("Inavalid Email Address ");
+			    	throw new ActivityException(); 
+				}
+			}
+		}
+		log.debug("*** Email Addrr List size= "+emailList.size());
+		
+		
+		if(fileName != null) {
+			File f = new File(fileName);
+			log.debug("###### File ###### "+f.getAbsolutePath());
+			if(f.isDirectory()) {
+				File [] fileList = f.listFiles(new FilenameFilter() 
+				{     
+					public boolean accept(File dir, String name) 
+					{         
+						return name.endsWith(".csv");     
+					} 
+				}); 
+			
+		log.debug("*** CSV File Name= "+fileName);
+		if (null != emailList && emailList.size() > 0) {
+			try {
+				
+				flag= EmailUtil.sendAttachmentMessage(  host, from, emailList,  message,  subject,  fileContent,  fileList );
+			} catch (MessagingException e) {
+				log.error("Message Exception "+e.fillInStackTrace());
+				throw new ActivityException(e.getMessage());
+			}
+		}
+			for(int i=0;i<fileList.length;i++)
+			{
+				fileList[i].delete();
+			}
+	  }	
+	}
+  }
+	
+	
+
+}

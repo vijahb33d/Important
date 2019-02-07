@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<enrolment-event-notification>
+    <enrolment>
+        <company>TestCompany4</company>
+        <account>TestAccount4</account>
+        <enrolment-type>ENROL</enrolment-type>
+        <account-type>flexcab</account-type>
+        <account-relation>NATIVE</account-relation>
+    </enrolment>
+    <enrolment>
+        <company>TestCompany5</company>
+        <account>TestAccount5</account>
+        <enrolment-type>ENROL</enrolment-type>
+        <account-type>flexcab</account-type>
+        <account-relation>NATIVE</account-relation>
+    </enrolment>
+    <enrolment>
+        <company>TestCompany1</company>
+        <account>TestAccount3</account>
+        <enrolment-type>DEENROL</enrolment-type>
+        <account-type>flexcab</account-type>
+        <account-relation>NATIVE</account-relation>
+    </enrolment>
+</enrolment-event-notification>

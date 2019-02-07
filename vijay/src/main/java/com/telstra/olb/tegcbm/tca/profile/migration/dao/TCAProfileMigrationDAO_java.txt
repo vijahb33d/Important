@@ -1,0 +1,22 @@
+/*
+ * Created on 2/09/2011
+ *
+ * TODO To change the template for this generated file go to
+ * Window - Preferences - Java - Code Style - Code Templates
+ */
+package com.telstra.olb.tegcbm.tca.profile.migration.dao;
+
+import java.util.Collection;
+
+import org.springframework.dao.DataAccessException;
+
+/**
+ * @author arun.balasubramanian
+ * 
+ * TODO To change the template for this generated type comment go to Window -
+ * Preferences - Java - Code Style - Code Templates
+ */
+public interface TCAProfileMigrationDAO {
+
+    Collection retrieveParamsForCIDN(String cidn) throws DataAccessException;
+}

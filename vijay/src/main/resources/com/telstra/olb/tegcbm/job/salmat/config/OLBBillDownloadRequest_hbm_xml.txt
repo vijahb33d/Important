@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD//EN"
+        "http://hibernate.sourceforge.net/hibernate-mapping-2.0.dtd">
+<hibernate-mapping auto-import="true"
+	package="com.telstra.olb.tegcbm.billdownload.model">
+	<class name="OLBBillDownloadRequest" table="OLB_BILL_DOWNLOAD_REQUEST"
+		lazy="false">
+		<id name="id" column="ID">
+			<generator class="native" />
+		</id>
+		<many-to-one name="bulkRequest" column="BULK_REQUEST_ID"
+			class="OLBBulkDownloadRequest" not-null="true">
+		</many-to-one>
+		<property name="created" column="CREATED"
+			type="java.util.Date" not-null="false" />
+		<property name="sourceSystem" column="SOURCE_SYSTEM"
+			type="int" not-null="true" />
+		<property name="downloadFormat" column="DOWNLOAD_FORMAT"
+			type="string" not-null="true" />
+		<property name="accountNumber" column="ACCOUNT_NUMBER"
+			type="string" not-null="true" />
+		<property name="billNumber" column="BILL_NUMBER"
+			type="string" not-null="true" />
+		<property name="billIssueDate" column="BILL_ISSUE_DATE"
+			type="java.util.Date" not-null="true" />
+		<property name="ddn" column="DDN"
+			type="string" not-null="true" />
+		<property name="docId" column="DOC_ID"
+			type="string" not-null="true" />
+		<property name="billFilePath" column="BILL_FILE_PATH"
+			type="string" not-null="false" />
+		<property name="status" column="STATUS"
+			type="int" not-null="true" />
+		<property name="comments" column="COMMENTS"
+			type="string" not-null="false" />
+	</class>
+</hibernate-mapping>

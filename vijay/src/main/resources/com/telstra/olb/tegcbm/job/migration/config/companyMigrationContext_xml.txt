@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+
+<!--
+	Company Migration context.
+	@author Deepak Bawa
+-->
+
+<beans default-lazy-init="true">
+	<bean id="cm.transactionManager"
+		class="org.springframework.orm.hibernate.HibernateTransactionManager">
+		<property name="sessionFactory" ref="cm.sessionFactory" />
+	</bean>
+
+	<bean id="cm.TransactionInterceptor" class="org.springframework.transaction.interceptor.TransactionInterceptor">
+		<property name="transactionManager">
+        	<ref bean="cm.transactionManager"/>
+        </property>
+        <property name="transactionAttributeSource">
+            <bean class="org.springframework.transaction.interceptor.NameMatchTransactionAttributeSource">
+                <property name="properties">
+                    <props>
+                      <prop key="find*">PROPAGATION_SUPPORTS,readOnly,-Exception</prop>
+                      <prop key="insert*">PROPAGATION_REQUIRED,-Exception</prop>
+                      <prop key="update*">PROPAGATION_REQUIRED,-Exception</prop>
+                      <prop key="audit">PROPAGATION_SUPPORTS,-Exception</prop>
+                    </props>
+                </property>
+            </bean>
+        </property>
+	</bean>
+
+	<bean id="cm.properties"
+		class="org.springframework.beans.factory.config.PropertiesFactoryBean"
+		lazy-init="true">
+		<property name="properties">
+			<props>
+				<prop key="hibernate.dialect">
+					$CM{hibernate.dialect}
+				</prop>
+				<prop key="hibernate.show_sql">
+					$CM{hibernate.show_sql}
+				</prop>
+				<prop key="hibernate.cache.provider_class">
+					net.sf.ehcache.hibernate.Provider
+				</prop>
+				<prop
+					key="hibernate.transaction.manager_lookup_class">
+					$CM{cm.transaction.manager.lookupClass}
+				</prop>
+				<prop key="hibernate.jdbc.batch_size">
+					$CM{hibernate.jdbc.batch_size}
+				</prop>
+				<prop key="hibernate.connection.release_mode">
+					$CM{hibernate.connection.release_mode}
+				</prop>
+			</props>
+		</property>
+	</bean>
+
+	<bean id="cm.test.properties"
+		class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+		<property name="properties">
+			<props>
+				<prop key="hibernate.dialect">
+					$CM{hibernate.dialect}
+				</prop>
+				<prop key="hibernate.show_sql">
+					$CM{hibernate.show_sql}
+				</prop>
+				<prop key="hibernate.cache.provider_class">
+					net.sf.ehcache.hibernate.Provider
+				</prop>
+				<prop key="hibernate.jdbc.batch_size">
+					$CM{hibernate.jdbc.batch_size}
+				</prop>
+				<prop key="hibernate.connection.release_mode">
+					$CM{hibernate.connection.release_mode}
+				</prop>
+			</props>
+		</property>
+	</bean>
+
+	<bean id="cm.sessionFactory"
+		class="org.springframework.orm.hibernate.LocalSessionFactoryBean">
+		<property name="dataSource" ref="cbmjac.cbm.jdbc.DataSource" />
+		<property name="useTransactionAwareDataSource" value="true" />
+		<property name="mappingResources">
+			<list>
+				<value>com/telstra/olb/tegcbm/job/migration/config/OLBCompanyMigration.hbm.xml</value>
+				<value>com/telstra/olb/tegcbm/job/migration/config/OLBTBUnmanagedMigration.hbm.xml</value>
+				<value>com/telstra/olb/tegcbm/job/migration/config/OLBMigrationAudit.hbm.xml</value>
+				<value>com/telstra/olb/tegcbm/job/migration/config/OLBTBUMigrationAudit.hbm.xml</value>
+				<value>com/telstra/olb/tegcbm/job/migration/config/OLBMigrationStatus.hbm.xml</value>
+				<value>com/telstra/olb/tegcbm/job/migration/config/OLBMigrationActivity.hbm.xml</value>
+			</list>
+		</property>
+		<property name="hibernateProperties">
+			<ref bean="$CM{hibernate.properties}" />
+		</property>
+	</bean>
+
+	<bean id="cm.migrationDAO.target"
+		class="com.telstra.olb.tegcbm.job.migration.dao.MigrationDAOHibernateImpl"
+		lazy-init="true">
+		<property name="sessionFactory" ref="cm.sessionFactory" />
+		<property name="inputBatchSize">
+			<value>$CM{hibernate.jdbc.batch_size}</value>
+		</property>
+	</bean>
+    
+    <bean id="cm.migrationDAO" class="org.springframework.aop.framework.ProxyFactoryBean">
+        <property name="interfaces">
+        	<list>
+            	<value>com.telstra.olb.tegcbm.job.migration.dao.MigrationDAO</value>
+        	</list>
+        </property>
+        <property name="target">
+            <ref local="cm.migrationDAO.target"/>
+        </property>
+        <property name="interceptorNames">
+            <list>
+                <value>cm.TransactionInterceptor</value>
+            </list>
+        </property>
+    </bean>
+
+</beans>

@@ -1,0 +1,271 @@
+/*
+ * Created on Aug 17, 2011
+ *
+ * TODO To change the template for this generated file go to
+ * Window - Preferences - Java - Code Style - Code Templates
+ */
+package com.telstra.olb.tegcbm.job.tbRegnImproved;
+
+import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.sql.Date;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.StringTokenizer;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.telstra.olb.tegcbm.job.core.Activity;
+import com.telstra.olb.tegcbm.job.core.ActivityException;
+import com.telstra.olb.tegcbm.job.core.IContext;
+import com.telstra.olb.tegcbm.job.tbRegnImproved.dao.TBOlbRegnSpringDao;
+
+/**
+ * @author vijay.ganesh.s
+ *
+ * TODO To change the template for this generated type comment go to
+ * Window - Preferences - Java - Code Style - Code Templates
+ */
+public class TBBillProcessorActivity implements Activity {
+	private final Log log = LogFactory.getLog(getClass());
+	private String name;
+	private String billFilePath;
+	private Activity nextActivity;
+	private TBOlbRegnSpringDao tbOlbImrprovedDao;
+	
+	/**
+	 * @param contentData
+	 * @return regEvent
+	 * @throws ParseException
+	 */
+	private TBRegistrationEventNotification createEnrolmentNotification(String contentData,Date  sqlCreatedDt) throws ParseException {
+		String accountNumber = null;
+		String cidn = null;
+		String preference = null;
+		TBRegistrationEventNotification regEvent = new TBRegistrationEventNotification();
+		StringTokenizer dataStrToken = new StringTokenizer(contentData,",");
+		while(dataStrToken.hasMoreElements()) {
+			cidn = (String) dataStrToken.nextElement();
+			accountNumber = (String) dataStrToken.nextElement();
+			preference = (String) dataStrToken.nextElement();
+			regEvent.setCustomerId((cidn != null && cidn.trim().length() > 0) ? cidn : null);
+			regEvent.setAccountNumber((accountNumber != null && accountNumber.trim().length() > 0) ? accountNumber : null);
+			regEvent.setPreference((preference != null && preference.trim().length() > 0) ? preference : null);
+			regEvent.setCreatedDate(sqlCreatedDt);
+			
+		}
+		log.debug("After forming TBRegistrationEventNotification "+regEvent.toString());
+		return regEvent;
+	}
+	
+	/**
+	 * Read the files in the configurable Paramater Path mentioned in company-migration.properties
+	 * Store the Data that is present in bill file into table OLB_TB_REGISTRATION under EDX_DBA.
+	 * If Error returns the Activity Exception.
+	 * @return fileContentList
+	 */
+
+	private void readFileContent() throws ActivityException {
+		java.io.FileInputStream controlFileStream = null;
+		DataInputStream in = null;
+		BufferedReader controlDataReader = null;
+		String strAbsFile=null;
+		String strInputFilename=null;
+		String strCreatedDt=null;
+		Date sqlCreatedDt=null;
+		
+		try {
+			if(getBillFilePath() != null) {
+				File f = new File(getBillFilePath());
+				log.debug("###### File ###### "+f.getAbsolutePath());				
+				if(f.isDirectory()) {
+					File [] fileList = f.listFiles(new FilenameFilter() 
+					{     
+						public boolean accept(File dir, String name) 
+						{         
+							return name.endsWith(".csv");     
+						} 
+					}); 
+					
+					for (int i=0;i < fileList.length ; i++) {
+						List eventNotificationData = new ArrayList();
+						String strLine = new String();
+						log.debug("###### File Name ###### "+fileList[i].getAbsolutePath());
+						strAbsFile = fileList[i].getAbsoluteFile().toString();
+						if(strAbsFile!=null)
+						{
+							strInputFilename=strAbsFile.substring(strAbsFile.lastIndexOf('/')+1,strAbsFile.length());
+							if(strInputFilename!=null)
+							{
+								strCreatedDt=strInputFilename.substring(0,8);
+							}
+						}
+						log.debug("###### String Created Date ###### "+strCreatedDt);
+						if(strCreatedDt!=null)
+						{
+							SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd"); 
+							java.util.Date dt = formatter.parse(strCreatedDt);
+							sqlCreatedDt=new java.sql.Date(dt.getTime());
+						}
+						log.debug("###### SQL Created Date ###### "+strCreatedDt);
+						controlFileStream = new java.io.FileInputStream(fileList[i]);
+						in = new DataInputStream(controlFileStream);
+						controlDataReader = new BufferedReader(new InputStreamReader(in));
+						while((strLine = controlDataReader.readLine()) != null) {
+							log.debug("###### StrLine ###### "+strLine);
+							if (strLine.startsWith("START")) {
+								continue;
+							} else if(strLine.startsWith("END")) {
+								break;
+							} else {
+								if(strLine.trim().length() > 0 && StringUtils.isNotEmpty(strLine)) {
+									TBRegistrationEventNotification tbRegEventNotify = new TBRegistrationEventNotification();
+									tbRegEventNotify = createEnrolmentNotification(strLine,sqlCreatedDt);
+									if(tbRegEventNotify.getAccountNumber() != null && tbRegEventNotify.getCustomerId() != null) {
+										eventNotificationData.add(tbRegEventNotify);
+									} else {
+										log.warn("****** Mandatory Data --> account Number and Cusomer Id are either empty or null ******");
+									}
+								}
+							}
+						}
+						if(eventNotificationData.size() > 0) {
+							//tbOlbImrprovedDao.storeData(eventNotificationData);	
+							List[] dataList = getStoreData(eventNotificationData);
+							tbOlbImrprovedDao.storeData(dataList[1]);
+							tbOlbImrprovedDao.updateExistAccountData(dataList[0]);
+							fileList[i].delete();
+						} else {
+							log.warn("****** Invalid File --> account Number and Cusomer Id are either empty or null or there are no data available ******");
+							fileList[i].delete();
+						}
+					}
+				}
+			} else {
+				log.error("The Fill Path is null");
+			}					
+		} catch(IOException ie) {
+			log.error("Exception happened during reading the file "+ie.fillInStackTrace());
+			throw new ActivityException(ie.getMessage());
+		} catch (ParseException pe) {
+			log.error("Exception happened during Parsing the Data in createEnrolmentNotification "+pe.fillInStackTrace());
+			throw new ActivityException(pe.getMessage());
+		} catch (TBRegnException tbre) {
+			log.error("Exception happened during Storing the Data in TB_OLB_REGISTRATION "+tbre.fillInStackTrace());
+			throw new ActivityException(tbre.getMessage());
+		}
+		finally {
+			try {
+				if(controlFileStream != null) {
+					controlFileStream.close();
+				}
+				if(controlDataReader != null) {
+					controlDataReader.close();
+				} 
+				if (in != null) {
+					in.close();
+				}
+			} catch(IOException ioe) {
+				log.error("Exception happened during Closing the Input Stream "+ioe.fillInStackTrace());
+				throw new ActivityException(ioe.getMessage());
+			}
+		}
+	}
+	
+	/**
+	 * @param eventNotificationData
+	 */
+	private List[] getStoreData(List eventNotificationData) {
+		List totalDataList[] = new ArrayList[2];
+		List alreadyExisting = new ArrayList();
+		List newRecord = new ArrayList();
+		for (int i=0; i<eventNotificationData.size() ; i++) {
+			TBRegistrationEventNotification tbEvent = (TBRegistrationEventNotification) eventNotificationData.get(i);
+			boolean isDataAlready = tbOlbImrprovedDao.checkAccountExist(tbEvent.getAccountNumber(),tbEvent.getCustomerId());
+			if(isDataAlready) {
+				alreadyExisting.add(tbEvent);
+			} else {
+				newRecord.add(tbEvent);
+			}
+		}
+		totalDataList[0] = alreadyExisting;
+		totalDataList[1] = newRecord;
+		return totalDataList;
+	}
+
+	/**
+	 * @return Returns the billFilePath.
+	 */
+	public String getBillFilePath() {
+		return billFilePath;
+	}
+	/**
+	 * @param billFilePath The billFilePath to set.
+	 */
+	public void setBillFilePath(String billFilePath) {
+		this.billFilePath = billFilePath;
+	}
+
+	/**
+	 * @return Returns the tbOlbImrprovedDao.
+	 */
+	public TBOlbRegnSpringDao getTbOlbImrprovedDao() {
+		return tbOlbImrprovedDao;
+	}
+	/**
+	 * @param tbOlbImrprovedDao The tbOlbImrprovedDao to set.
+	 */
+	public void setTbOlbImrprovedDao(TBOlbRegnSpringDao tbOlbImrprovedDao) {
+		this.tbOlbImrprovedDao = tbOlbImrprovedDao;
+	}
+
+	/* (non-Javadoc)
+	 * @see com.telstra.olb.tegcbm.job.core.Activity#getName()
+	 */
+	public String getName() {
+		return this.name;
+	}
+
+	/* (non-Javadoc)
+	 * @see com.telstra.olb.tegcbm.job.core.Activity#execute(com.telstra.olb.tegcbm.job.core.IContext)
+	 */
+	public void execute(IContext activityContext) throws ActivityException {
+		readFileContent();
+	}
+	/* (non-Javadoc)
+	 * @see com.telstra.olb.tegcbm.job.core.Activity#getNextActivity()
+	 */
+	public Activity getNextActivity() {
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see com.telstra.olb.tegcbm.job.core.Activity#getData(com.telstra.olb.tegcbm.job.core.IContext)
+	 */
+	public Iterator getData(IContext activityContext) {
+		return null;
+	}
+	/**
+	 * @param name The name to set.
+	 */
+	public void setName(String name) {
+		this.name = name;
+	}
+	/**
+	 * @param nextActivity The nextActivity to set.
+	 */
+	public void setNextActivity(Activity nextActivity) {
+		this.nextActivity = nextActivity;
+	}
+	
+	
+}

@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans default-lazy-init="true">
+	<bean id="cbmjac.migrate.profile.activity"
+		class="org.springframework.beans.factory.config.BeanReferenceFactoryBean">
+		<property name="targetBeanName">
+			<value>$CM{cbmjac.migrate.profile.target}</value>
+		</property>
+	</bean>
+	
+	<bean id="cbmjac.tbuEnrol.profile.concurrent" class="com.telstra.olb.tegcbm.job.core.AsynchronousActivity">
+		<property name="name">
+			<value>cbmjac.tbuEnrol.profile</value>
+		</property>
+		<property name="executorService">
+			<ref bean="$CM{cbmjac.migrate.profile.executor}"/>
+		</property>
+		<property name="taskManager">
+			<ref bean="cbmjac.task.manager"/>
+		</property>
+		<property name="activityDelegate">
+			<ref local="cbmjac.tbuEnrol.profile.delegate"/>
+		</property>
+	</bean>
+	
+	<bean id="cbmjac.migrate.profile.concurrent" class="com.telstra.olb.tegcbm.job.migration.profiles.activity.AsynchronousProfileMigrationActivity">
+		<property name="name">
+			<value>cbmjac.migrate.profile</value>
+		</property>
+		<property name="executorService">
+			<ref bean="$CM{cbmjac.migrate.profile.executor}"/>
+		</property>
+		<property name="taskManager">
+			<ref bean="cbmjac.task.manager"/>
+		</property>
+		<property name="activityDelegate">
+			<ref local="cbmjac.migrate.profile.delegate"/>
+		</property>
+		<property name="profilesPdbDao">
+			<ref local="cbmjac.migrate.profile.activity.profilesPdbDao"/>
+		</property>
+		<property name="cacheTimeOut">
+			<value>$CM{cbmjac.migrate.profile.cacheTimeOut}</value>
+		</property>
+	</bean>
+	
+	<bean id="cbmjac.migrate.profile.delegate" class="com.telstra.olb.tegcbm.job.migration.profiles.activity.ProfileMigrationActivity">
+		<property name="name">
+			<value>cbmjac.migrate.profile</value>
+		</property>
+		<property name="profilesPdbDao">
+			<ref local="cbmjac.migrate.profile.activity.profilesPdbDao"/>
+		</property>
+		<property name="enrolmentprocessor">
+			<ref local="cbmjac.migrate.profile.activity.migrationEnrolmentProcessor"/>
+		</property>
+		<property name="inputValidator">
+			<ref bean="cbmjac.migration.activity.inputvalidator"/>
+		</property>
+		<property name="dataProvider">
+			<ref bean="cbmjac.migration.activity.dataprovider"/>
+		</property>
+		<property name="activityListeners">
+			<list>
+				<ref bean="cbmjac.activity.status.processing"/>
+				<ref bean="cbmjac.activity.status.complete"/>
+				<ref bean="cbmjac.activity.status.error"/>
+				<ref bean="cbmjac.job.processing"/>
+				<ref bean="cbmjac.job.error"/>
+			</list>
+		</property>
+		<property name="nextActivity">
+			<ref bean="cbmjac.tbuEnrol.preferences.cleanup.activity"/>
+		</property>
+	</bean>
+	
+	<bean id="cbmjac.migrate.profile.delegate2" parent="cbmjac.migrate.profile.delegate">
+		<property name="stopOnError">
+			<value>false</value>
+		</property>
+		<property name="nextActivity">
+			<null/>
+		</property>
+	</bean>
+	
+	<bean id="cbmjac.tbuEnrol.profile.delegate" parent="cbmjac.migrate.profile.delegate">
+		<property name="name">
+			<value>cbmjac.migrate.profile</value>
+		</property>
+		<property name="activityListeners">
+			<list>
+				<ref bean="cbmjac.activity.status.processing"/>
+				<ref bean="cbmjac.activity.status.complete"/>
+				<ref bean="cbmjac.activity.status.error"/>
+				<ref bean="cbmjac.job.error"/>
+			</list>
+		</property>
+		<property name="nextActivity">
+			<ref bean ="cbmjac.tbuEnrol.preferences.cleanup.activity"/>
+		</property>
+	</bean>
+	
+	<!-- CBM Account Enrolment EJB -->
+	<bean id="CBMTelstraAccountEnrolDelegateTarget"
+		class="com.telstra.olb.tegcbm.accountenrolment.delegate.CBMTelstraAcctEnrolmentDelegateImpl">
+	</bean>
+
+	<bean id="cbmjac.migrate.profile.activity.migrationEnrolmentProcessor"
+		class="com.telstra.olb.tegcbm.job.migration.profiles.activity.MigrationAccountEnrolmentProcessor"
+		lazy-init="true">
+		<property name="accountEnrolmentDelegate" ref="CBMTelstraAccountEnrolDelegateTarget" />
+	</bean>
+   
+	<!-- PDB Dao for Profile Migration Activity -->
+	<bean id="cbmjac.migrate.profile.activity.pdb.TransactionInterceptor" class="org.springframework.transaction.interceptor.TransactionInterceptor">
+		<property name="transactionManager">
+        	<bean class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+  				<property name="dataSource" ref="cbmjac.pdb.jdbc.DataSource"/>
+			</bean>
+        </property>
+        <property name="transactionAttributeSource">
+            <bean class="org.springframework.transaction.interceptor.NameMatchTransactionAttributeSource">
+                <property name="properties">
+                    <props>
+                      <prop key="get*">PROPAGATION_SUPPORTS,readOnly</prop>
+                    </props>
+                </property>
+            </bean>
+        </property>
+	</bean>
+	
+	<bean id="cbmjac.migrate.profile.activity.profilesPdbDao" class="org.springframework.aop.framework.ProxyFactoryBean">
+        <property name="interfaces">
+        	<list>
+            	<value>com.telstra.olb.tegcbm.job.migration.profiles.dao.PDBProfilesDAO</value>
+        	</list>
+        </property>
+        <property name="target">
+            <ref local="cbmjac.migrate.profile.activity.profilesPdbDao.target"/>
+        </property>
+        <property name="interceptorNames">
+            <list>
+                <value>cbmjac.migrate.profile.activity.pdb.TransactionInterceptor</value>
+            </list>
+        </property>
+    </bean>
+	
+   	<bean id="cbmjac.migrate.profile.activity.profilesPdbDao.target" class="com.telstra.olb.tegcbm.job.migration.profiles.dao.PDBProfilesDAOSpringJdbcImpl">
+		<property name="jdbcTemplate"><ref bean="cbmjac.pdb.jdbcTemplate"/></property>
+	</bean>
+</beans>

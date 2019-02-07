@@ -1,0 +1,116 @@
+/*
+ * Created on Aug 17, 2011
+ *
+ * TODO To change the template for this generated file go to
+ * Window - Preferences - Java - Code Style - Code Templates
+ */
+package com.telstra.olb.tegcbm.job.tbRegnImproved;
+
+import java.io.Serializable;
+import java.sql.Date;
+
+/**
+ * @author vijay.ganesh.s
+ *
+ * TODO To change the template for this generated type comment go to
+ * Window - Preferences - Java - Code Style - Code Templates
+ */
+public class TBRegistrationEventNotification implements Serializable {
+	
+	private String accountNumber;
+	private String customerId;
+	private java.sql.Date createdDate;
+	private java.sql.Date enrolDate;
+	private String preference;
+	private java.sql.Date paperStatusDate; 
+	private String reportStatus;
+
+	/**
+	 * @return Returns the accountNumber.
+	 */
+	public String getAccountNumber() {
+		return accountNumber;
+	}
+	/**
+	 * @param accountNumber The accountNumber to set.
+	 */
+	public void setAccountNumber(String accountNumber) {
+		this.accountNumber = accountNumber;
+	}
+	/**
+	 * @return Returns the createdDate.
+	 */
+	public Date getCreatedDate() {
+		return createdDate;
+	}
+	/**
+	 * @param createdDate The createdDate to set.
+	 */
+	public void setCreatedDate(Date createdDate) {
+		this.createdDate = createdDate;
+	}
+	/**
+	 * @return Returns the customerId.
+	 */
+	public String getCustomerId() {
+		return customerId;
+	}
+	/**
+	 * @param customerId The customerId to set.
+	 */
+	public void setCustomerId(String customerId) {
+		this.customerId = customerId;
+	}
+	/**
+	 * @return Returns the enrolDate.
+	 */
+	public Date getEnrolDate() {
+		return enrolDate;
+	}
+	/**
+	 * @param enrolDate The enrolDate to set.
+	 */
+	public void setEnrolDate(Date enrolDate) {
+		this.enrolDate = enrolDate;
+	}
+	/**
+	 * @return Returns the paperStatusDate.
+	 */
+	public Date getPaperStatusDate() {
+		return paperStatusDate;
+	}
+	/**
+	 * @param paperStatusDate The paperStatusDate to set.
+	 */
+	public void setPaperStatusDate(Date paperStatusDate) {
+		this.paperStatusDate = paperStatusDate;
+	}
+	/**
+	 * @return Returns the preference.
+	 */
+	public String getPreference() {
+		return preference;
+	}
+	/**
+	 * @param preference The preference to set.
+	 */
+	public void setPreference(String preference) {
+		this.preference = preference;
+	}
+	
+	public String toString(){
+		return getAccountNumber()+":"+getCustomerId()+":"+getCreatedDate()+":"+getEnrolDate()+":"+getPreference()+":"+getPaperStatusDate();
+	}
+	/**
+	 * @return Returns the reportStatus.
+	 */
+	public String getReportStatus() {
+		return reportStatus;
+	}
+	/**
+	 * @param reportStatus The reportStatus to set.
+	 */
+	public void setReportStatus(String reportStatus) {
+		this.reportStatus = reportStatus;
+	}
+}

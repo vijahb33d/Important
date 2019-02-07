@@ -1,0 +1,123 @@
+/*
+ * Created on Aug 19, 2011
+ *
+ * TODO To change the template for this generated file go to
+ * Window - Preferences - Java - Code Style - Code Templates
+ */
+package com.telstra.olb.tegcbm.job.tbRegnImproved.generator;
+
+import java.util.Iterator;
+import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+
+import com.telstra.olb.tegcbm.job.core.Activity;
+import com.telstra.olb.tegcbm.job.core.ActivityException;
+import com.telstra.olb.tegcbm.job.core.IContext;
+
+import com.telstra.olb.tegcbm.job.tbRegnImproved.TBRegnException;
+import com.telstra.olb.tegcbm.job.tbRegnImproved.dao.TBOlbRegnSpringDao;
+
+/**
+ * @author ramesh.babu.athota
+ *
+ * TODO To change the template for this generated type comment go to
+ * Window - Preferences - Java - Code Style - Code Templates
+ */
+public class TBReportGeneratorActivity implements Activity{
+	
+	private final Log log = LogFactory.getLog(getClass());
+	private String name;
+	private String csvFilePath;
+	private Activity nextActivity;
+	private TBOlbRegnSpringDao tbOlbImrprovedDao;
+	private CSVReportGenerator csvReportGenerator=new CSVReportGenerator();
+	
+	/* (non-Javadoc)
+	 * @see com.telstra.olb.tegcbm.job.core.Activity#execute(com.telstra.olb.tegcbm.job.core.IContext)
+	 */
+	public void execute(IContext activityContext) throws ActivityException {
+		List tbAccountList;
+		try {
+			tbAccountList = tbOlbImrprovedDao.regAccountsData();
+			List regnDaysList= tbOlbImrprovedDao.getRegnDays();
+			String regnDays="";
+			if(regnDaysList.size()>0) {
+				regnDays=(String)regnDaysList.get(0);
+			}
+			List[] statusList = csvReportGenerator.generateCSVReport(tbAccountList,getCsvFilePath(),regnDays);
+			if(statusList[0].size() > 0) {
+				log.debug("**** Inside Purging Record for Success **** "+statusList[0].size());
+				tbOlbImrprovedDao.purgeData(statusList[0]);
+			}
+			if(statusList[1].size() > 0) {
+				log.debug("**** Inside Purging Record for Failure **** "+statusList[1].size());
+				tbOlbImrprovedDao.deleteRegn(statusList[1]);
+			}
+		} catch (TBRegnException e) {
+			log.error("Exception happened during reading the data from table "+e.fillInStackTrace());
+			throw new ActivityException(e.getMessage());
+		}	
+	}
+	
+	/* (non-Javadoc)
+	 * @see com.telstra.olb.tegcbm.job.core.Activity#getNextActivity()
+	 */
+	public Activity getNextActivity() {
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see com.telstra.olb.tegcbm.job.core.Activity#getData(com.telstra.olb.tegcbm.job.core.IContext)
+	 */
+	public Iterator getData(IContext activityContext) {
+		return null;
+	}
+	/**
+	 * @param name The name to set.
+	 */
+	public void setName(String name) {
+		this.name = name;
+	}
+	
+	/* (non-Javadoc)
+	 * @see com.telstra.olb.tegcbm.job.core.Activity#getName()
+	 */
+	public String getName() {
+		return this.name;
+	}
+	/**
+	 * @param nextActivity The nextActivity to set.
+	 */
+	public void setNextActivity(Activity nextActivity) {
+		this.nextActivity = nextActivity;
+	}
+	
+
+	/**
+	 * @return Returns the csvFilePath.
+	 */
+	public String getCsvFilePath() {
+		return csvFilePath;
+	}
+	/**
+	 * @param csvFilePath The csvFilePath to set.
+	 */
+	public void setCsvFilePath(String csvFilePath) {
+		this.csvFilePath = csvFilePath;
+	}
+	/**
+	 * @return Returns the tbOlbImrprovedDao.
+	 */
+	public TBOlbRegnSpringDao getTbOlbImrprovedDao() {
+		return tbOlbImrprovedDao;
+	}
+	/**
+	 * @param tbOlbImrprovedDao The tbOlbImrprovedDao to set.
+	 */
+	public void setTbOlbImrprovedDao(TBOlbRegnSpringDao tbOlbImrprovedDao) {
+		this.tbOlbImrprovedDao = tbOlbImrprovedDao;
+	}
+}

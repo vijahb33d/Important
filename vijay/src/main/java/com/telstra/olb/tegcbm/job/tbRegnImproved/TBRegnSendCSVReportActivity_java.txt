@@ -1,0 +1,159 @@
+/*
+ * Created on Aug 19, 2011
+ *
+ * TODO To change the template for this generated file go to
+ * Window - Preferences - Java - Code Style - Code Templates
+ */
+package com.telstra.olb.tegcbm.job.tbRegnImproved;
+
+import java.util.Iterator;
+import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.telstra.olb.tegcbm.job.core.Activity;
+import com.telstra.olb.tegcbm.job.core.ActivityException;
+import com.telstra.olb.tegcbm.job.core.IContext;
+import com.telstra.olb.tegcbm.job.tbRegnImproved.dao.TBOlbRegnSpringDao;
+
+
+/**
+ * @author ramesh.babu.athota
+ *
+ * TODO To change the template for this generated type comment go to
+ * Window - Preferences - Java - Code Style - Code Templates
+ */
+public class TBRegnSendCSVReportActivity implements Activity{
+	
+	private final Log log = LogFactory.getLog(getClass());
+	private String name;
+	private String mailHost;
+	private String csvFilePath;
+	private String from="TBRegistrationReport";
+	private String subject="TB Registration Report";
+	private Activity nextActivity;
+	private TBOlbRegnSpringDao tbOlbImrprovedDao;
+	private TBRegnSendEmailReport emailReport=new TBRegnSendEmailReport();
+	
+	
+	/* (non-Javadoc)
+	 * @see com.telstra.olb.tegcbm.job.core.Activity#execute(com.telstra.olb.tegcbm.job.core.IContext)
+	 */
+	public void execute(IContext activityContext) throws ActivityException {
+		 List emailList= tbOlbImrprovedDao.getEmailAddress();
+		 log.debug("*** email list= "+emailList.size());
+		 if(emailList.size() > 0) {
+			String paramString = (String) emailList.get(0);
+			try
+			{
+				emailReport.sendEmailReport(getMailHost(),paramString,from,subject,getCsvFilePath());
+			}
+			catch(Exception e)
+			{
+				log.error("Exception: "+e.getMessage());
+				throw new ActivityException();
+			}
+		  }
+		 
+			
+					
+	}
+	
+	/* (non-Javadoc)
+	 * @see com.telstra.olb.tegcbm.job.core.Activity#getNextActivity()
+	 */
+	public Activity getNextActivity() {
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see com.telstra.olb.tegcbm.job.core.Activity#getData(com.telstra.olb.tegcbm.job.core.IContext)
+	 */
+	public Iterator getData(IContext activityContext) {
+		return null;
+	}
+	/**
+	 * @param name The name to set.
+	 */
+	public void setName(String name) {
+		this.name = name;
+	}
+	
+	/* (non-Javadoc)
+	 * @see com.telstra.olb.tegcbm.job.core.Activity#getName()
+	 */
+	public String getName() {
+		return this.name;
+	}
+	/**
+	 * @param nextActivity The nextActivity to set.
+	 */
+	public void setNextActivity(Activity nextActivity) {
+		this.nextActivity = nextActivity;
+	}
+	
+
+	/**
+	 * @return Returns the csvFilePath.
+	 */
+	public String getCsvFilePath() {
+		return csvFilePath;
+	}
+	/**
+	 * @param csvFilePath The csvFilePath to set.
+	 */
+	public void setCsvFilePath(String csvFilePath) {
+		this.csvFilePath = csvFilePath;
+	}
+
+
+	/**
+	 * @return Returns the from.
+	 */
+	/*public String getFrom() {
+		return from;
+	}
+	*//**
+	 * @param from The from to set.
+	 *//*
+	public void setFrom(String from) {
+		this.from = from;
+	}*/
+	/**
+	 * @return Returns the subject.
+	 */
+	/*public String getSubject() {
+		return subject;
+	}
+	*//**
+	 * @param subject The subject to set.
+	 *//*
+	public void setSubject(String subject) {
+		this.subject = "TB Registration Report";
+	}*/
+	/**
+	 * @return Returns the mailHost.
+	 */
+	public String getMailHost() {
+		return mailHost;
+	}
+	/**
+	 * @param mailHost The mailHost to set.
+	 */
+	public void setMailHost(String mailHost) {
+		this.mailHost = mailHost;
+	}
+	/**
+	 * @return Returns the tbOlbImrprovedDao.
+	 */
+	public TBOlbRegnSpringDao getTbOlbImrprovedDao() {
+		return tbOlbImrprovedDao;
+	}
+	/**
+	 * @param tbOlbImrprovedDao The tbOlbImrprovedDao to set.
+	 */
+	public void setTbOlbImrprovedDao(TBOlbRegnSpringDao tbOlbImrprovedDao) {
+		this.tbOlbImrprovedDao = tbOlbImrprovedDao;
+	}
+}

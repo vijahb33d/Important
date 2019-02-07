@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans default-lazy-init="true">
+	<bean id="cbmjac.populatePreferences.manager"
+		class="com.telstra.olb.tegcbm.job.core.DefaultManagerImpl">
+		<property name="usage">
+			<value>
+				<![CDATA[populate migrationType={list of migrationTypes seperated by commas.}\n
+				The available one is SME ]]>
+			</value>
+		</property>
+		<property name="jobs">
+			<list>
+				<ref local="cbmjac.identifyCompanies.activity" />
+				<ref local="cbmjac.migratepreferences.activity" />
+				<ref local="cbmjac.removeCompanies.activity"/>
+				<ref local="cbmjac.migratepreferencesreport.activity" />
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="cbmjac.migrationtype.dataprovider" class="com.telstra.olb.tegcbm.job.migration.data.MigrationTypeDataProvider">
+		<property name="migrationDao">
+			<ref bean="cm.migrationDAO"/>
+		</property>
+	</bean>
+	
+	<bean id="cbmjac.tbupreferences.migrate.dataprovider" class="com.telstra.olb.tegcbm.job.migration.tbu.preferences.data.MigrateTBUPreferencesDataProvider">
+		<property name="populateDao">
+			<ref bean="cbmjac.migratepreferences.activity.populateDao"/>
+		</property>
+	</bean>
+	
+	<!-- Start - Identify companies Activity -->
+	<bean id="cbmjac.identifyCompanies.activity"
+		class="com.telstra.olb.tegcbm.job.migration.tbu.preferences.activity.IdentifyCompaniesActivity">
+		<property name="name">
+			<value>cbmjac.populate.identifyCompanies</value>
+		</property>
+		<property name="macroSegments">
+			<list>
+				<bean
+					class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean">
+					<property name="staticField">
+						<value>
+							com.telstra.olb.tegcbm.job.migration.populate.model.MigrationType.SME
+						</value>
+					</property>
+				</bean>
+			</list>
+		</property>
+		<property name="identifyCompaniesDao">
+			<ref local="cbmjac.populate.activity.identifyCompaniesDao" />
+		</property>
+		<property name="migrationDao">
+			<ref bean="cm.migrationDAO" />
+		</property>
+		<property name="dataProvider">
+			<ref bean="cbmjac.migrationtype.dataprovider"/>
+		</property>
+		<property name="activityListeners">
+			<list/>
+		</property>
+		<property name="nextActivity">
+			<null />
+		</property>
+	</bean>
+
+	<bean id="cbmjac.populate.activity.identifyCompaniesDao"
+		class="org.springframework.aop.framework.ProxyFactoryBean">
+		<property name="interfaces">
+			<list>
+				<value>
+					com.telstra.olb.tegcbm.job.migration.populate.dao.PopulateDao
+				</value>
+			</list>
+		</property>
+		<property name="target">
+			<ref local="cbmjac.populate.activity.identifyCompaniesDao.target" />
+		</property>
+	</bean>
+
+	<bean id="cbmjac.populate.activity.identifyCompaniesDao.target"
+		class="com.telstra.olb.tegcbm.job.migration.populate.dao.PopulateDaoSpringJdbcImpl">
+		<property name="jdbcTemplate">
+			<ref bean="cbmjac.cbm.jdbcTemplate" />
+		</property>
+		<property name="sqls">
+			<map>
+				<entry key="SME.SQL">
+					<value>
+						<![CDATA[
+							SELECT cp.name as CIDN, cpf.ATTRVALUE as OWN_CODE
+							FROM EDX_DBA.EDX_BSL_CO_PROF_ATTRIBS cpf 
+							INNER JOIN EDX_DBA.EDX_BSL_CMF_COMPANYPROFILE cp ON cp.ID = cpf.ATTRID
+							WHERE cpf.ATTRKEY = 'ownership_code' AND cpf.ATTRVALUE in (SELECT OWN_CODE FROM OLB_DBA.OLB_CATEGORY_T WHERE SEGMENT = 'SmallBusiness' AND MACRO_SEGMENT = 'SME') 
+						]]>
+					</value>
+				</entry>
+			</map>
+		</property>
+	</bean>
+<!-- End - Identify companies Activity -->
+	
+	
+<!-- Start - Migrate Preferences Activity  -->
+	<bean id="cbmjac.migratepreferences.activity" 
+		class="com.telstra.olb.tegcbm.job.core.AsynchronousActivity">
+		<property name="name">
+			<value>cbmjac.populate.migratePreferences</value>
+		</property>
+		<property name="executorService">
+			<ref bean="$CM{cbmjac.migrate.profile.executor}"/>
+		</property>
+		<property name="taskManager">
+			<ref bean="cbmjac.task.manager"/>
+		</property>
+		<property name="activityDelegate">
+			<ref local="cbmjac.migratepreferences.activity.delegate"/>
+		</property>
+		<property name="activityListeners">
+			<list>
+				<ref bean="cbmjac.activity.status.processing"/>
+				<ref bean="cbmjac.activity.status.complete"/>
+				<ref bean="cbmjac.activity.status.error"/>
+			</list>
+		</property>
+	</bean>
+
+	<bean id="cbmjac.migratepreferences.activity.delegate"
+		class="com.telstra.olb.tegcbm.job.migration.tbu.preferences.activity.MigrateTBUnmanagedPreferencesActivity">
+		<property name="name">
+			<value>cbmjac.populate.migratePreferences.delegate</value>
+		</property>
+		<property name="populateDao">
+			<ref local="cbmjac.migratepreferences.activity.populateDao" />
+		</property>
+		<property name="populateDaoPDB">
+			<ref local="cbmjac.migratepreferences.activity.populateDao.pdb" />
+		</property>
+		<property name="dataProvider">
+			<ref bean="cbmjac.tbupreferences.migrate.dataprovider"/>
+		</property>
+		<property name="attributeProps">
+		 <bean class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+     		 <property name="location">
+       			 <value>classpath:/com/telstra/olb/tegcbm/job/migration/config/preferenceKeyValue.properties</value>
+      		 </property>
+      	 </bean>
+		</property>
+		<property name="activityListeners">
+			<list>
+				<ref bean="cbmjac.job.processing"/>
+				<ref bean="cbmjac.job.error"/>
+				<ref bean="cbmjac.job.complete"/>
+			</list>
+		</property>
+		<property name="nextActivity">
+			<null />
+		</property>
+	</bean>
+	
+	<bean id="cbmjac.migratepreferences.activity.populateDao"
+		class="org.springframework.aop.framework.ProxyFactoryBean">
+		<property name="interfaces">
+			<list>
+				<value>
+					com.telstra.olb.tegcbm.job.migration.populate.dao.PopulateDao
+				</value>
+			</list>
+		</property>
+		<property name="target">
+			<ref local="cbmjac.migratepreferences.activity.populateDao.target" />
+		</property>
+	</bean>
+
+	<bean id="cbmjac.migratepreferences.activity.populateDao.target"
+		class="com.telstra.olb.tegcbm.job.migration.populate.dao.PopulateDaoSpringJdbcImpl">
+		<property name="jdbcTemplate">
+			<ref bean="cbmjac.cbm.jdbcTemplate" />
+		</property>
+		<property name="sqls">
+			<map>
+				<entry key="SME.SQL">
+					<value>
+						<![CDATA[
+							SELECT upa.attrid, upa.attrvalue, upa.attrKey, sp.userid
+							FROM EDX_DBA.EDX_BSL_AUTH_SECPROFILE sp 
+							INNER JOIN EDX_DBA.EDX_BSL_UMF_USER u on u.securityprofileid = sp.profileid
+							INNER JOIN EDX_DBA.EDX_BSL_UMF_USERPROFILE up on up.profileid = u.userprofileid
+							INNER JOIN EDX_DBA.EDX_BSL_USER_PROF_ATTRIBS upa on upa.attrid = up.profileid
+							where upa. ATTRKey  in ( 'newStmtAvailableEmail', 'paymentDueXDaysEmail') and
+							sp.userid like 
+						]]>
+					</value>
+				</entry>
+			</map>
+		</property>
+	</bean>
+	
+	<bean id="cbmjac.migratepreferences.activity.populateDao.pdb"
+		class="org.springframework.aop.framework.ProxyFactoryBean">
+		<property name="interfaces">
+			<list>
+				<value>
+					com.telstra.olb.tegcbm.job.migration.populate.dao.PopulateDao
+				</value>
+			</list>
+		</property>
+		<property name="target">
+			<ref local="cbmjac.migratepreferences.activity.populateDao.pdb.target" />
+		</property>
+	</bean>
+
+	<bean id="cbmjac.migratepreferences.activity.populateDao.pdb.target"
+		class="com.telstra.olb.tegcbm.job.migration.populate.dao.PopulateDaoSpringJdbcImpl">
+		<property name="jdbcTemplate">
+			<ref bean="cbmjac.pdb.jdbcTemplate" />
+		</property>
+	</bean>
+<!-- End - Migrate Preferences Activity  -->
+
+<!-- Start - Remove companies Activity  -->
+<bean id="cbmjac.removeCompanies.activity"
+		class="com.telstra.olb.tegcbm.job.migration.tbu.preferences.activity.RemoveCompaniesActivity">
+		<property name="name">
+			<value>cbmjac.populate.removeCompanies</value>
+		</property>
+		<property name="macroSegments">
+			<list>
+				<bean
+					class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean">
+					<property name="staticField">
+						<value>
+							com.telstra.olb.tegcbm.job.migration.populate.model.MigrationType.SME
+						</value>
+					</property>
+				</bean>
+			</list>
+		</property>
+		<property name="populateDao">
+			<ref local="cbmjac.populate.activity.removeCompaniesDao" />
+		</property>
+		<property name="dataProvider">
+			<ref bean="cbmjac.migrationtype.dataprovider"/>
+		</property>
+		<property name="activityListeners">
+			<list>
+				<ref bean="cbmjac.activity.status.processing"/>
+				<ref bean="cbmjac.activity.status.complete"/>
+				<ref bean="cbmjac.activity.status.error"/>
+			</list>		
+		</property>
+		<property name="nextActivity">
+			<null />
+		</property>
+	</bean>
+
+	<bean id="cbmjac.populate.activity.removeCompaniesDao"
+		class="org.springframework.aop.framework.ProxyFactoryBean">
+		<property name="interfaces">
+			<list>
+				<value>
+					com.telstra.olb.tegcbm.job.migration.populate.dao.PopulateDao
+				</value>
+			</list>
+		</property>
+		<property name="target">
+			<ref local="cbmjac.populate.activity.removeCompaniesDao.target" />
+		</property>
+	</bean>
+
+	<bean id="cbmjac.populate.activity.removeCompaniesDao.target"
+		class="com.telstra.olb.tegcbm.job.migration.populate.dao.PopulateDaoSpringJdbcImpl">
+		<property name="jdbcTemplate">
+			<ref bean="cbmjac.cbm.jdbcTemplate" />
+		</property>
+		<property name="sqls">
+			<map>
+				<entry key="SME.SQL">
+					<value>
+						<![CDATA[
+							SELECT * FROM EDX_DBA.OLB_ACCOUNT_COMPANY_MAP
+							WHERE COMPANY_ID IN ( 
+							SELECT COMPANY_CODE FROM EDX_DBA.OLB_TBUNMANAGED_MIGRATION 
+							WHERE ACTIVITY_STATUS_ID <> 4)
+						]]>
+					</value>
+				</entry>
+			</map>
+		</property>
+	</bean>
+<!-- End - Remove companies Activity  -->
+
+<!-- Start - Generate Migration report -->
+<bean id="cbmjac.migratepreferencesreport.activity"
+		class="com.telstra.olb.tegcbm.job.migration.tbu.preferences.activity.GenerateReportActivity">
+		<property name="name">
+			<value>cbmjac.populate.migratePreferencesReport</value>
+		</property>
+		<property name="macroSegments">
+			<list>
+				<bean
+					class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean">
+					<property name="staticField">
+						<value>
+							com.telstra.olb.tegcbm.job.migration.populate.model.MigrationType.SME
+						</value>
+					</property>
+				</bean>
+			</list>
+		</property>
+		<property name="populateDao">
+			<ref local="cbmjac.populate.activity.removeCompaniesDao" />
+		</property>
+		<property name="csvPath">
+			<value>/opt/WebSphere/AppServer/migration/cbm2bp_report/</value>
+		</property>
+		<property name="dataProvider">
+			<ref bean="cbmjac.migrationtype.dataprovider"/>
+		</property>
+		<property name="activityListeners">
+			<list/>
+		</property>
+		<property name="nextActivity">
+			<null />
+		</property>
+	</bean>
+<!-- End - Generate Migration report -->
+
+<!-- Start - Migration Listeners -->	
+	<bean id="cbmjac.job.processing" parent="cbmjac.activity.status.processing" class="com.telstra.olb.tegcbm.job.migration.listeners.MigrationActivityStatusListener"/>
+	
+	<bean id="cbmjac.job.complete" parent="cbmjac.activity.status.complete" class="com.telstra.olb.tegcbm.job.migration.listeners.MigrationActivityStatusListener"/>
+	
+	<bean id="cbmjac.job.error" parent="cbmjac.activity.status.error" class="com.telstra.olb.tegcbm.job.migration.listeners.MigrationActivityStatusListener"/>
+<!-- End - Migration Listeners -->
+</beans>

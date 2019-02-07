@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE databases PUBLIC
+  "-//EXOLAB/Castor Mapping DTD Version 1.0//EN"
+  "http://castor.exolab.org/mapping.dtd">
+
+<mapping>
+  	<description>Mapping between DocumentPdfVO.java and DocumentPdfVO-TestData.xml</description>
+  	<class name="com.telstra.olb.tegcbm.job.salmat.manager.SalmatPdfVOResponse" auto-complete="false">
+	  	<map-to xml="SalmatPdfVO"/>
+		<field name="billingAccountCode" type="string">
+	  		<bind-xml name="billingAccountCode" node="element"/>
+	  	</field>
+	  	<field name="billNumber" type="string">
+	  		<bind-xml name="billNumber" node="element"/>
+	  	</field>
+	  	<field name="fileLocation" type="string">
+	  		<bind-xml name="fileLocation" node="element"/>
+	  	</field>
+		<field name="exceptionCode" type="string">
+	  		<bind-xml name="exceptionCode" node="element"/>
+	  	</field>
+  	</class>
+
+  	<class name="com.telstra.olb.tegcbm.job.salmat.manager.SalmatPdfVOResponses" auto-complete="false">
+		<map-to xml="SalmatPdfVO-TestData"/>
+		<field name="salmatResponses" collection="arraylist" type="com.telstra.olb.tegcbm.job.salmat.manager.SalmatPdfVOResponse"> 
+			<bind-xml name="SalmatPdfVO" node="element"/>
+		</field>
+	</class> 
+</mapping>

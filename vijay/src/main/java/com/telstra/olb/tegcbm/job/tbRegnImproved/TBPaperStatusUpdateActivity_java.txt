@@ -1,0 +1,138 @@
+/*
+ * Created on Aug 18, 2011
+ *
+ * TODO To change the template for this generated file go to
+ * Window - Preferences - Java - Code Style - Code Templates
+ */
+package com.telstra.olb.tegcbm.job.tbRegnImproved;
+
+import java.sql.Date;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Iterator;
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.telstra.olb.tegcbm.job.core.Activity;
+import com.telstra.olb.tegcbm.job.core.ActivityException;
+import com.telstra.olb.tegcbm.job.core.IContext;
+import com.telstra.olb.tegcbm.job.tbRegnImproved.dao.TBOlbRegnSpringDao;
+
+/**
+ * @author vijay.ganesh.s
+ *
+ * TODO To change the template for this generated type comment go to
+ * Window - Preferences - Java - Code Style - Code Templates
+ */
+public class TBPaperStatusUpdateActivity implements Activity {
+	private final Log log = LogFactory.getLog(getClass());
+	private String name;
+	private Activity nextActivity;
+	private TBOlbRegnSpringDao tbOlbSpringDao;
+		
+	/* (non-Javadoc)
+	 * @see com.telstra.olb.tegcbm.job.core.Activity#execute(com.telstra.olb.tegcbm.job.core.IContext)
+	 */
+	public void execute(IContext activityContext) throws ActivityException {
+		List paperStatusData = tbOlbSpringDao.paperStatusData();
+		Calendar currentCalc = Calendar.getInstance();
+		Date currentDate = new java.sql.Date(currentCalc.getTime().getTime());
+		boolean isEnrolmentComplete = false;
+		Calendar updateCalc = getParameterPaperStatusDate();
+		Date updatePaperDate = new java.sql.Date(updateCalc.getTime().getTime());
+		log.debug("The Paper Date is "+updatePaperDate);
+		log.debug("The Current Date is "+currentDate);
+		for (int i=0 ; i < paperStatusData.size() ; i++) {
+			TBRegistrationEventNotification tbEventNotification = (TBRegistrationEventNotification) paperStatusData.get(i);
+			if(StringUtils.isNotEmpty(tbEventNotification.getAccountNumber())) {
+				isEnrolmentComplete = tbOlbSpringDao.checkEnrolmentDone(tbEventNotification.getAccountNumber());			
+				log.debug("###### Enrolment Created ###### "+isEnrolmentComplete);
+				if(isEnrolmentComplete) {
+					log.debug("###### Validating whether the Paper Status Parameter Date is greater then Batch Date ###### "+(updatePaperDate != null && (updatePaperDate.compareTo(currentDate) >= 0)));
+					if(updatePaperDate != null && (updatePaperDate.compareTo(currentDate) >= 0)) {
+						tbEventNotification.setEnrolDate(currentDate);
+						tbEventNotification.setPaperStatusDate(updatePaperDate);						
+					} else {
+						log.error("!!!!!! Paper Status Date is lesss than Current Date or Paper Status Date is null !!!!!!!");
+					}					
+				}			
+				log.debug("##### After Update tbEventNotification ##### "+ tbEventNotification.toString());
+			}
+		}
+		tbOlbSpringDao.updateEnrolData(paperStatusData);
+	}
+
+	/**
+	 * @return
+	 * @throws ActivityException
+	 * @throws ParseException
+	 */
+	private Calendar getParameterPaperStatusDate() throws ActivityException {
+		Calendar calc = null;
+		calc = tbOlbSpringDao.paramValueData();
+		return calc;
+	}
+	
+	
+
+	/**
+	 * @param utilDate
+	 * @return
+	 */
+	private Date convertToSqlDate(java.util.Date utilDate) {
+		Date sqlDate = null;
+		SimpleDateFormat simpleFormat = new SimpleDateFormat("yyyy-MM-dd");
+		String convertedDate = simpleFormat.format(utilDate);
+		sqlDate = Date.valueOf(convertedDate);
+		log.debug("*** Converted Sql Date *** "+sqlDate);
+		return sqlDate;
+	}
+
+	/* (non-Javadoc)
+	 * @see com.telstra.olb.tegcbm.job.core.Activity#getData(com.telstra.olb.tegcbm.job.core.IContext)
+	 */
+	public Iterator getData(IContext activityContext) {
+		return null;
+	}
+
+	/**
+	 * @param name The name to set.
+	 */
+	public void setName(String name) {
+		this.name = name;
+	}
+	/**
+	 * @param nextActivity The nextActivity to set.
+	 */
+	public void setNextActivity(Activity nextActivity) {
+		this.nextActivity = nextActivity;
+	}
+	/**
+	 * @return Returns the name.
+	 */
+	public String getName() {
+		return name;
+	}
+	/**
+	 * @return Returns the nextActivity.
+	 */
+	public Activity getNextActivity() {
+		return nextActivity;
+	}
+	/**
+	 * @return Returns the tbOlbSpringDao.
+	 */
+	public TBOlbRegnSpringDao getTbOlbSpringDao() {
+		return tbOlbSpringDao;
+	}
+	/**
+	 * @param tbOlbSpringDao The tbOlbSpringDao to set.
+	 */
+	public void setTbOlbSpringDao(TBOlbRegnSpringDao tbOlbSpringDao) {
+		this.tbOlbSpringDao = tbOlbSpringDao;
+	}
+}
