@@ -1,5 +1,0 @@
-cbmjac.enrolments.stub.delegate=cbmjac.enrolments.stub.delegate.ejb
-
-cbmjac.enrolments.stub.dataSource = cbmjac.enrolments.stub.fileDataSource
-
-cbmjac.enrolments.stub.xml.mapper=com/telstra/olb/tegcbm/accountenrolment/mapping/EnrolmentContext-mapping.xml

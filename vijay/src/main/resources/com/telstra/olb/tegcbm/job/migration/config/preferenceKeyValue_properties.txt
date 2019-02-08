@@ -1,2 +1,0 @@
-newStmtAvailableEmail=BAN
-paymentDueXDaysEmail=BPR
