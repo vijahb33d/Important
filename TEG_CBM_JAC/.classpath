@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src/main/java"/>
+	<classpathentry kind="src" path="src/main/resources"/>
+	<classpathentry kind="src" path="src/test/java"/>
+	<classpathentry kind="src" path="src/test/resources"/>
+	<classpathentry kind="con" path="com.ibm.wtp.server.java.core.container/com.ibm.etools.websphere.runtime.core.runtimeTarget.v51/was.base.v51"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/WebSphere v5.1 JRE"/>
+	<classpathentry kind="lib" path="/TEG_CBM_Web/WebContent/WEB-INF/lib/AddressBook.jar"/>
+	<classpathentry kind="lib" path="/TEG_CBM_Web/WebContent/WEB-INF/lib/cam.jar"/>
+	<classpathentry kind="lib" path="/TEG_CBM_Web/WebContent/WEB-INF/lib/displaytag-1.0-rc1.jar"/>
+	<classpathentry kind="lib" path="/TEG_CBM_Web/WebContent/WEB-INF/lib/DisplayView.jar"/>
+	<classpathentry kind="lib" path="/TEG_CBM_Web/WebContent/WEB-INF/lib/edx_servlet.jar"/>
+	<classpathentry kind="lib" path="/TEG_CBM_Web/WebContent/WEB-INF/lib/ejb-ldetoolkit.jar"/>
+	<classpathentry kind="lib" path="/TEG_CBM_Web/WebContent/WEB-INF/lib/javachart.jar"/>
+	<classpathentry kind="lib" path="/TEG_CBM_Web/WebContent/WEB-INF/lib/jta.jar"/>
+	<classpathentry kind="lib" path="/TEG_CBM_Web/WebContent/WEB-INF/lib/ldeprotocol.jar"/>
+	<classpathentry kind="lib" path="/TEG_CBM_Web/WebContent/WEB-INF/lib/MRCToolKit.jar"/>
+	<classpathentry kind="lib" path="/TEG_CBM_Web/WebContent/WEB-INF/lib/payment_napi.jar"/>
+	<classpathentry kind="lib" path="/TEG_CBM_Web/WebContent/WEB-INF/lib/poi-2.0-RC2.jar"/>
+	<classpathentry kind="lib" path="/TEG_CBM_Web/WebContent/WEB-INF/lib/TagProcessing.jar"/>
+	<classpathentry kind="lib" path="/TEG_CBM_Web/WebContent/WEB-INF/lib/tbm-b2b-app.jar"/>
+	<classpathentry kind="lib" path="/TEG_CBM_Web/WebContent/WEB-INF/lib/tbm-b2c-app.jar"/>
+	<classpathentry kind="lib" path="/TEG_CBM_Web/WebContent/WEB-INF/lib/tbm-common.jar"/>
+	<classpathentry kind="lib" path="/TEG_CBM_Web/WebContent/WEB-INF/lib/tbm-core.jar"/>
+	<classpathentry kind="lib" path="/TEG_CBM_Web/WebContent/WEB-INF/lib/transformer.jar"/>
+	<classpathentry kind="lib" path="/TEG_CBM_Web/WebContent/WEB-INF/lib/UnbilledActivity.jar"/>
+	<classpathentry kind="lib" path="/TEG_CBM_Web/WebContent/WEB-INF/lib/URLAccesControl.jar"/>
+	<classpathentry kind="lib" path="/TEG_CBM_Web/WebContent/WEB-INF/lib/xtags.jar"/>
+	<classpathentry exported="true" sourcepath="/TEG_CBM_EAR/lib/commons-dbcp-1.2.jar" kind="lib" path="/TEG_CBM_EAR/lib/commons-dbcp-1.2.jar"/>
+	<classpathentry exported="true" kind="src" path="/TEG_CBM_EJB"/>
+	<classpathentry exported="true" sourcepath="/TEG_CBM_EAR/lib/OLBServicesEJBClient.jar" kind="lib" path="/TEG_CBM_EAR/lib/OLBServicesEJBClient.jar"/>
+	<classpathentry exported="true" sourcepath="/TEG_CBM_EAR/lib/ProfDBEJBClient.jar" kind="lib" path="/TEG_CBM_EAR/lib/ProfDBEJBClient.jar"/>
+	<classpathentry exported="true" sourcepath="/TEG_CBM_EAR/lib/aopalliance-1.0.jar" kind="lib" path="/TEG_CBM_EAR/lib/aopalliance-1.0.jar"/>
+	<classpathentry exported="true" sourcepath="/TEG_CBM_EAR/lib/asm-1.5.3.jar" kind="lib" path="/TEG_CBM_EAR/lib/asm-1.5.3.jar"/>
+	<classpathentry exported="true" sourcepath="/TEG_CBM_EAR/lib/bsl.jar" kind="lib" path="/TEG_CBM_EAR/lib/bsl.jar"/>
+	<classpathentry exported="true" sourcepath="/TEG_CBM_EAR/lib/rbac-2.0a.jar" kind="lib" path="/TEG_CBM_EAR/lib/rbac-2.0a.jar"/>
+	<classpathentry exported="true" sourcepath="/TEG_CBM_EAR/lib/commons-logging-1.0.3.jar" kind="lib" path="/TEG_CBM_EAR/lib/commons-logging-1.0.3.jar"/>
+	<classpathentry exported="true" sourcepath="/TEG_CBM_EAR/lib/ehcache-0.6.jar" kind="lib" path="/TEG_CBM_EAR/lib/ehcache-0.6.jar"/>
+	<classpathentry exported="true" sourcepath="/TEG_CBM_EAR/lib/hibernate-2.1.3c.jar" kind="lib" path="/TEG_CBM_EAR/lib/hibernate-2.1.3c.jar"/>
+	<classpathentry exported="true" sourcepath="/TEG_CBM_EAR/lib/hierarchy-1.0.8.jar" kind="lib" path="/TEG_CBM_EAR/lib/hierarchy-1.0.8.jar"/>
+	<classpathentry exported="true" sourcepath="/TEG_CBM_EAR/lib/log4j-1.2.8.jar" kind="lib" path="/TEG_CBM_EAR/lib/log4j-1.2.8.jar"/>
+	<classpathentry exported="true" sourcepath="/TEG_CBM_EAR/lib/tbm-cfg.jar" kind="lib" path="/TEG_CBM_EAR/lib/tbm-cfg.jar"/>
+	<classpathentry exported="true" sourcepath="/TEG_CBM_EAR/lib/odmg-3.0.jar" kind="lib" path="/TEG_CBM_EAR/lib/odmg-3.0.jar"/>
+	<classpathentry exported="true" sourcepath="/TEG_CBM_EAR/lib/dom4j-1.4.jar" kind="lib" path="/TEG_CBM_EAR/lib/dom4j-1.4.jar"/>
+	<classpathentry exported="true" sourcepath="/TEG_CBM_EAR/lib/commons-pool-1.2.jar" kind="lib" path="/TEG_CBM_EAR/lib/commons-pool-1.2.jar"/>
+	<classpathentry exported="true" sourcepath="/TEG_CBM_EAR/lib/jsch-0.1.42.jar" kind="lib" path="/TEG_CBM_EAR/lib/jsch-0.1.42.jar"/>
+	<classpathentry exported="true" sourcepath="/TEG_CBM_EAR/lib/TelJIesRpcStubClient.jar" kind="lib" path="/TEG_CBM_EAR/lib/TelJIesRpcStubClient.jar"/>
+	<classpathentry exported="true" sourcepath="/TEG_CBM_EAR/lib/activation.jar" kind="lib" path="/TEG_CBM_EAR/lib/activation.jar"/>
+	<classpathentry exported="true" sourcepath="/TEG_CBM_EAR/lib/dom.jar" kind="lib" path="/TEG_CBM_EAR/lib/dom.jar"/>
+	<classpathentry exported="true" sourcepath="/TEG_CBM_EAR/lib/j2ee.jar" kind="lib" path="/TEG_CBM_EAR/lib/j2ee.jar"/>
+	<classpathentry exported="true" sourcepath="/TEG_CBM_EAR/lib/jax-qname.jar" kind="lib" path="/TEG_CBM_EAR/lib/jax-qname.jar"/>
+	<classpathentry exported="true" sourcepath="/TEG_CBM_EAR/lib/jaxrpc-api.jar" kind="lib" path="/TEG_CBM_EAR/lib/jaxrpc-api.jar"/>
+	<classpathentry exported="true" sourcepath="/TEG_CBM_EAR/lib/jaxrpc-impl.jar" kind="lib" path="/TEG_CBM_EAR/lib/jaxrpc-impl.jar"/>
+	<classpathentry exported="true" sourcepath="/TEG_CBM_EAR/lib/jaxrpc-spi.jar" kind="lib" path="/TEG_CBM_EAR/lib/jaxrpc-spi.jar"/>
+	<classpathentry exported="true" sourcepath="/TEG_CBM_EAR/lib/mail.jar" kind="lib" path="/TEG_CBM_EAR/lib/mail.jar"/>
+	<classpathentry exported="true" sourcepath="/TEG_CBM_EAR/lib/saaj-api.jar" kind="lib" path="/TEG_CBM_EAR/lib/saaj-api.jar"/>
+	<classpathentry exported="true" sourcepath="/TEG_CBM_EAR/lib/saaj-impl.jar" kind="lib" path="/TEG_CBM_EAR/lib/saaj-impl.jar"/>
+	<classpathentry exported="true" sourcepath="/TEG_CBM_EAR/lib/xercesImpl.jar" kind="lib" path="/TEG_CBM_EAR/lib/xercesImpl.jar"/>
+	<classpathentry sourcepath="/TEG_CBM_EAR/lib/easymock-1.2.jar" kind="lib" path="/TEG_CBM_EAR/lib/easymock-1.2.jar"/>
+	<classpathentry sourcepath="/TEG_CBM_EAR/lib/easymockclassextension-1.2.jar" kind="lib" path="/TEG_CBM_EAR/lib/easymockclassextension-1.2.jar"/>
+	<classpathentry sourcepath="/TEG_CBM_EAR/lib/junit.jar" kind="lib" path="/TEG_CBM_EAR/lib/junit.jar"/>
+	<classpathentry kind="lib" path="/TEG_CBM_EAR/lib/spring-1.2.6.jar"/>
+	<classpathentry kind="lib" path="D:/Vijay/Office/Accenture/Shared Library/Common/olbcommon-xml-1.0.jar"/>
+	<classpathentry kind="lib" path="/TEG_CBM_EAR/lib/TEG_CBA_EJBClient-1.0-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="D:/Vijay/Office/Accenture/Shared Library/Common/olbcommon-core-1.1.jar"/>
+	<classpathentry kind="output" path="target"/>
+</classpath>

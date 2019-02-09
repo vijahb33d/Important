@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans default-lazy-init="true">
+
+	<!-- Migration Manager -->
+	<bean id="cbmjac.migrate.manager" class="com.telstra.olb.tegcbm.job.core.DefaultManagerImpl">
+		<property name="usage">
+			<value><![CDATA[migrate [companyList={list of companies seperated by commas}] 
+									[migrationSize={size to retrieve}] 
+									[status={list of statuses seperated by commas}] 
+									[segment={SME|ENTERPRISE}]]]></value>
+		</property>
+		<property name="jobs">
+			<list>
+				<ref bean="cbmjac.migrate.profile.activity"/>
+			</list>
+		</property>
+	</bean>
+	
+	<!-- Migration Job Listeners -->
+	<bean id="cbmjac.job.processing" parent="cbmjac.activity.status.processing" class="com.telstra.olb.tegcbm.job.migration.listeners.MigrationActivityStatusListener"/>
+	
+	<bean id="cbmjac.job.complete" parent="cbmjac.activity.status.complete" class="com.telstra.olb.tegcbm.job.migration.listeners.MigrationActivityStatusListener"/>
+	
+	<bean id="cbmjac.job.error" parent="cbmjac.activity.status.error" class="com.telstra.olb.tegcbm.job.migration.listeners.MigrationActivityStatusListener"/>
+	
+	<bean id="cbmjac.migration.activity.inputvalidator" class="com.telstra.olb.tegcbm.job.migration.data.MigrationDataInputValidator">
+		<property name="migrationDao">
+			<ref bean="cm.migrationDAO"/>
+		</property>
+	</bean>
+	
+	<bean id="cbmjac.migration.activity.dataprovider" class="com.telstra.olb.tegcbm.job.migration.data.MigrationDataProvider">
+			<property name="migrationDao">
+				<ref bean="cm.migrationDAO"/>
+			</property>
+	</bean>
+	
+	<!-- =========================== Activity Contexts ======================================== -->
+	<import resource="classpath:/com/telstra/olb/tegcbm/job/migration/config/teg-cbm-jac-profileMigrationActivityContext.xml"/>
+	
+	<import resource="classpath:/com/telstra/olb/tegcbm/job/migration/config/teg-cbm-jac-preferencesMigrationActivityContext.xml"/>
+	
+	<import resource="classpath:/com/telstra/olb/tegcbm/job/migration/config/teg-cbm-jac-pabMigrationActivityContext.xml"/>
+	
+	<import resource="classpath:/com/telstra/olb/tegcbm/job/migration/config/teg-cbm-jac-eftIdMigrationActivityContext.xml"/>
+	
+</beans>

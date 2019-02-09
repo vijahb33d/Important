@@ -1,0 +1,349 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans default-lazy-init="true">
+
+	<!-- Rollback Manager -->
+	<bean id="cbmjac.rollback.manager" class="com.telstra.olb.tegcbm.job.core.DefaultManagerImpl">
+		<property name="usage">
+			<value><![CDATA[rollback companyList={list of companies seperated by commas} ]]></value>
+		</property>
+		<property name="jobs">
+			<list>
+				<ref bean="cbmjac.rollback.preferences.activity"/>
+				<ref bean="cbmjac.rollback.pab.activity"/>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="cbmjac.rollback.activity.inputvalidator" class="com.telstra.olb.tegcbm.job.migration.data.MigrationDataInputValidator">
+		<property name="migrationDao">
+			<ref bean="cm.migrationDAO"/>
+		</property>
+	</bean>
+	
+	<bean id="cbmjac.rollback.activity.dataprovider" class="com.telstra.olb.tegcbm.job.migration.data.RollbackActivityDataProvider">
+		<property name="migrationDao">
+			<ref bean="cm.migrationDAO"/>
+		</property>
+	</bean>
+	
+	<bean id="cbmjac.rollback.eftid.activity.dataprovider" class="com.telstra.olb.tegcbm.job.migration.eftid.data.EFTIDRollbackActivityDataProvider">
+		<property name="migrationDao">
+			<ref bean="cm.migrationDAO"/>
+		</property>
+	</bean>
+	
+	<bean id="cbmjac.rollback.job" class="com.telstra.olb.tegcbm.job.core.DefaultJob">
+		<property name="name">
+			<value>cbmjac.rollback.job</value>
+		</property>
+		<property name="childActivities">
+			<list>
+				<ref bean="cbmjac.rollback.preferences.activity"/>
+				<ref bean="cbmjac.rollback.pab.activity"/>
+<!-- 				<ref bean="cbmjac.rollback.eftid.activity"/>
+-->			</list>
+		</property>
+		<property name="concurrentActivities">
+			<null/>
+		</property>
+		<property name="executorService">
+			<null/>
+		</property>
+		<property name="taskManager">
+			<null/>
+		</property>
+		<property name="activityListeners">
+			<list>
+				<ref bean="cbmjac.job.complete"/>
+			</list>			
+		</property>
+		<property name="nextActivity">
+			<null/>
+		</property>
+	</bean>
+	
+	
+	<!-- Rollback Job Listeners -->
+	
+	<bean id="cbmjac.job.complete" parent="cbmjac.activity.status.complete" class="com.telstra.olb.tegcbm.job.migration.listeners.RollbackMigrationActivityStatusListener"/>
+	
+	<!-- =========================== Activity Contexts ======================================== -->
+	
+	<!-- Preferences Rollback Activity -->
+	<bean id="cbmjac.rollback.preferences.activity" class="com.telstra.olb.tegcbm.job.migration.pref.activity.PreferencesRollbackActivity">
+		<property name="name">
+			<value>cbmjac.rollback.preferences</value>
+		</property>
+		<property name="preferencesDao">
+			<ref local="cbmjac.rollback.preferences.activity.pdbPreferencesDao"/>
+		</property>
+		<property name="cbmPreferencesRollbackDao">
+			<ref local="cbmjac.rollback.preferences.activity.cbmPreferencesDao"/>
+		</property>
+		<property name="hierarchyCleanUpDAO">
+			<ref local="cbmjac.rollback.activity.hierarchyDao"/>
+		</property>
+		<property name="inputValidator">
+			<ref bean="cbmjac.rollback.activity.inputvalidator"/>
+		</property>
+		<property name="dataProvider">
+			<ref bean="cbmjac.rollback.activity.dataprovider"/>
+		</property>
+		<property name="activityListeners">
+			<list>
+				<ref bean="cbmjac.activity.status.processing"/>
+				<ref bean="cbmjac.activity.status.complete"/>
+				<ref bean="cbmjac.activity.status.error"/>
+			</list>
+		</property>
+		<property name="nextActivity">
+			<null/>
+		</property>
+	</bean>
+	
+	<!-- CBM Dao for Preferences Rollback Activity -->
+	<bean id="cbmjac.rollback.preferences.activity.cbm.TransactionInterceptor" class="org.springframework.transaction.interceptor.TransactionInterceptor">
+		<property name="transactionManager">
+        	<bean class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+  				<property name="dataSource" ref="cbmjac.cbm.jdbc.DataSource"/>
+			</bean>
+        </property>
+        <property name="transactionAttributeSource">
+            <bean class="org.springframework.transaction.interceptor.NameMatchTransactionAttributeSource">
+                <property name="properties">
+                    <props>
+                      <prop key="remove*">PROPAGATION_REQUIRED</prop>
+                    </props>
+                </property>
+            </bean>
+        </property>
+	</bean>
+	
+	<bean id="cbmjac.rollback.preferences.activity.cbmPreferencesDao" class="org.springframework.aop.framework.ProxyFactoryBean">
+        <property name="interfaces">
+        	<list>
+            	<value>com.telstra.olb.tegcbm.job.migration.pref.dao.CBMPreferencesRollbackDAO</value>
+        	</list>
+        </property>
+        <property name="target">
+            <ref local="cbmjac.rollback.preferences.activity.cbmPreferencesDao.target"/>
+        </property>
+        <property name="interceptorNames">
+            <list>
+                <value>cbmjac.rollback.preferences.activity.cbm.TransactionInterceptor</value>
+            </list>
+        </property>
+    </bean>
+
+   	<bean id="cbmjac.rollback.preferences.activity.cbmPreferencesDao.target" class="com.telstra.olb.tegcbm.job.migration.pref.dao.CBMPreferencesRollbackDAOSpringJdbcImpl">
+		<property name="jdbcTemplate"><ref bean="cbmjac.cbm.jdbcTemplate"/></property>
+	</bean>
+
+	<bean id="cbmjac.rollback.activity.hierarchyDao" class="org.springframework.aop.framework.ProxyFactoryBean">
+        <property name="interfaces">
+        	<list>
+            	<value>com.telstra.olb.tegcbm.job.migration.profiles.dao.HierarchyCleanUpDAO</value>
+        	</list>
+        </property>
+        <property name="target">
+            <ref local="cbmjac.rollback.activity.hierarchyDao.target"/>
+        </property>
+        <property name="interceptorNames">
+            <list>
+               <value>cbmjac.rollback.activity.hierarchyDao.TransactionInterceptor</value>
+            </list>
+        </property>
+    </bean>
+
+	<bean id="cbmjac.rollback.activity.hierarchyDao.target" class="com.telstra.olb.tegcbm.job.migration.profiles.dao.HierarchyCleanUpDAOSpringJdbcImpl">
+		<property name="jdbcTemplate"><ref bean="cbmjac.cbm.jdbcTemplate"/></property>
+	</bean>    
+
+	<bean id="cbmjac.rollback.activity.hierarchyDao.TransactionInterceptor" class="org.springframework.transaction.interceptor.TransactionInterceptor">
+		<property name="transactionManager">
+        	<bean class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+  				<property name="dataSource" ref="cbmjac.cbm.jdbc.DataSource"/>
+			</bean>
+        </property>
+        <property name="transactionAttributeSource">
+            <bean class="org.springframework.transaction.interceptor.NameMatchTransactionAttributeSource">
+                <property name="properties">
+                    <props>
+                      <prop key="*">PROPAGATION_REQUIRED,readOnly</prop>
+                    </props>
+                </property>
+            </bean>
+        </property>
+	</bean>
+	
+	<!-- PDB Dao for Preferences Rollback Activity -->
+	<bean id="cbmjac.rollback.preferences.activity.pdb.TransactionInterceptor" class="org.springframework.transaction.interceptor.TransactionInterceptor">
+		<property name="transactionManager">
+        	<bean class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+  				<property name="dataSource" ref="cbmjac.pdb.jdbc.DataSource"/>
+			</bean>
+        </property>
+        <property name="transactionAttributeSource">
+            <bean class="org.springframework.transaction.interceptor.NameMatchTransactionAttributeSource">
+                <property name="properties">
+                    <props>
+                      <prop key="get*">PROPAGATION_SUPPORTS,readOnly</prop>
+                      <prop key="restore*">PROPAGATION_REQUIRED</prop>
+                      <prop key="remove*">PROPAGATION_REQUIRED</prop>
+                    </props>
+                </property>
+            </bean>
+        </property>
+	</bean>
+	
+	<bean id="cbmjac.rollback.preferences.activity.pdbPreferencesDao" class="org.springframework.aop.framework.ProxyFactoryBean">
+        <property name="interfaces">
+        	<list>
+            	<value>com.telstra.olb.tegcbm.job.migration.pref.dao.PDBPreferencesRollbackDAO</value>
+        	</list>
+        </property>
+        <property name="target">
+            <ref local="cbmjac.rollback.preferences.activity.pdbPreferencesDao.target"/>
+        </property>
+        <property name="interceptorNames">
+            <list>
+                <value>cbmjac.rollback.preferences.activity.pdb.TransactionInterceptor</value>
+            </list>
+        </property>
+    </bean>
+    
+   	<bean id="cbmjac.rollback.preferences.activity.pdbPreferencesDao.target" class="com.telstra.olb.tegcbm.job.migration.pref.dao.PDBPreferencesRollbackDAOSpringJdbcImpl">
+		<property name="jdbcTemplate"><ref bean="cbmjac.pdb.jdbcTemplate"/></property>
+	</bean>
+	
+	<!-- EFTID Rollback Activity -->
+	<bean id="cbmjac.rollback.eftid.activity" class="com.telstra.olb.tegcbm.job.migration.eftid.activity.EFTIDRollbackActivity">
+		<property name="name">
+			<value>cbmjac.rollback.eftid</value>
+		</property>
+		<property name="eftIdRollbackDao">
+			<ref local="cbmjac.rollback.preferences.eftid.olbEftidRollbackDao"/>
+		</property>
+		<property name="inputValidator">
+			<ref bean="cbmjac.rollback.activity.inputvalidator"/>
+		</property>
+		<property name="dataProvider">
+			<ref bean="cbmjac.rollback.eftid.activity.dataprovider"/>
+		</property>
+		<property name="activityListeners">
+			<list>
+				<ref bean="cbmjac.activity.status.processing"/>
+				<ref bean="cbmjac.activity.status.complete"/>
+				<ref bean="cbmjac.activity.status.error"/>
+			</list>
+		</property>
+		<property name="nextActivity">
+			<null/>
+		</property>
+	</bean>
+	
+	<!-- OLB Dao for Eftid Rollback Activity -->
+	<bean id="cbmjac.rollback.preferences.eftid.olb.TransactionInterceptor" class="org.springframework.transaction.interceptor.TransactionInterceptor">
+		<property name="transactionManager">
+        	<bean class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+  				<property name="dataSource" ref="cbmjac.olb.jdbc.DataSource"/>
+			</bean>
+        </property>
+        <property name="transactionAttributeSource">
+            <bean class="org.springframework.transaction.interceptor.NameMatchTransactionAttributeSource">
+                <property name="properties">
+                    <props>
+                      <prop key="update*">PROPAGATION_REQUIRED</prop>
+                    </props>
+                </property>
+            </bean>
+        </property>
+	</bean>
+	
+	<bean id="cbmjac.rollback.preferences.eftid.olbEftidRollbackDao" class="org.springframework.aop.framework.ProxyFactoryBean">
+        <property name="interfaces">
+        	<list>
+            	<value>com.telstra.olb.tegcbm.job.migration.eftid.dao.EftIdDAO</value>
+        	</list>
+        </property>
+        <property name="target">
+            <ref local="cbmjac.rollback.preferences.eftid.olbEftidRollbackDao.target"/>
+        </property>
+        <property name="interceptorNames">
+            <list>
+                <value>cbmjac.rollback.preferences.eftid.olb.TransactionInterceptor</value>
+            </list>
+        </property>
+    </bean>
+	
+   	<bean id="cbmjac.rollback.preferences.eftid.olbEftidRollbackDao.target" class="com.telstra.olb.tegcbm.job.migration.eftid.dao.EftIdDAOSpringJdbcImpl">
+		<property name="jdbcTemplate"><ref bean="cbmjac.olb.jdbcTemplate"/></property>
+		<property name="applicationId"><value>2</value></property>
+	</bean>
+		
+	<!-- PAB Rollback Activity -->
+	<bean id="cbmjac.rollback.pab.activity" class="com.telstra.olb.tegcbm.job.migration.pab.activity.PABRollbackActivity">
+		<property name="name">
+			<value>cbmjac.rollback.pab</value>
+		</property>
+		<property name="cbmAddressBookDAO">
+			<ref local="cbmjac.rollback.pab.activity.cbmAddressBookDao"/>
+		</property>
+		<property name="inputValidator">
+			<ref bean="cbmjac.rollback.activity.inputvalidator"/>
+		</property>
+		<property name="dataProvider">
+			<ref bean="cbmjac.rollback.activity.dataprovider"/>
+		</property>
+		<property name="activityListeners">
+			<list>
+				<ref bean="cbmjac.activity.status.processing"/>
+				<ref bean="cbmjac.activity.status.complete"/>
+				<ref bean="cbmjac.activity.status.error"/>
+			</list>
+		</property>
+		<property name="nextActivity">
+			<null/>
+		</property>
+	</bean>
+	
+	<!-- CBM Dao for PAB Rollback Activity -->
+	<bean id="cbmjac.rollback.pab.activity.cbm.TransactionInterceptor" class="org.springframework.transaction.interceptor.TransactionInterceptor">
+		<property name="transactionManager">
+        	<bean class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+  				<property name="dataSource" ref="cbmjac.cbm.jdbc.DataSource"/>
+			</bean>
+        </property>
+        <property name="transactionAttributeSource">
+            <bean class="org.springframework.transaction.interceptor.NameMatchTransactionAttributeSource">
+                <property name="properties">
+                    <props>
+                      <prop key="remove*">PROPAGATION_REQUIRED</prop>
+                    </props>
+                </property>
+            </bean>
+        </property>
+	</bean>
+	
+	<bean id="cbmjac.rollback.pab.activity.cbmAddressBookDao" class="org.springframework.aop.framework.ProxyFactoryBean">
+        <property name="interfaces">
+        	<list>
+            	<value>com.telstra.olb.tegcbm.job.migration.pab.dao.CBMAddressBookDAO</value>
+        	</list>
+        </property>
+        <property name="target">
+            <ref local="cbmjac.rollback.pab.activity.cbmAddressBookDao.target"/>
+        </property>
+        <property name="interceptorNames">
+            <list>
+                <value>cbmjac.rollback.pab.activity.cbm.TransactionInterceptor</value>
+            </list>
+        </property>
+    </bean>
+    
+   	<bean id="cbmjac.rollback.pab.activity.cbmAddressBookDao.target" class="com.telstra.olb.tegcbm.job.migration.pab.dao.CBMAddressBookDAOSpringJdbcImpl">
+		<property name="jdbcTemplate"><ref bean="cbmjac.cbm.jdbcTemplate"/></property>
+	</bean>
+	
+</beans>

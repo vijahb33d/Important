@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans default-lazy-init="true">
+
+	<bean id="cbmjac.transferCPAN.manager" class="com.telstra.olb.tegcbm.job.core.DefaultManagerImpl">
+		<property name="usage">
+			<value>
+				<![CDATA[transferCPAN]]>
+			</value>
+		</property>
+		<property name="jobs">
+			<list>
+				<ref local="cbmjac.migration.transferCPAN"/>
+			</list>
+		</property>
+	</bean>
+
+	<bean id="panConversion.properties" class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+		<property name="location">
+			<value>classpath:/com/telstra/olb/tegcbm/job/migration/panconversion/config/panConversion-default.properties</value>
+		</property>
+	</bean>
+
+	<bean id="cbmjac.migration.transferCPAN" class="com.telstra.olb.tegcbm.job.migration.panconversion.activity.TransferCPANActivity">
+		<property name="name">
+			<value>cbmjac.migration.transferCPAN</value>
+		</property>
+		<property name="properties">
+			<ref local="panConversion.properties"/>
+		</property>
+		<property name="creditCardDao">
+			<ref local="cbmjac.creditCardDao"/>
+		</property>
+	</bean>
+
+	<bean id="cbmjac.retrieveTPAN.manager" class="com.telstra.olb.tegcbm.job.core.DefaultManagerImpl">
+		<property name="usage">
+			<value>
+				<![CDATA[retrieveTPAN]]>
+			</value>
+		</property>
+		<property name="jobs">
+			<list>
+				<ref local="cbmjac.migration.retrieveTPAN"/>
+			</list>
+		</property>
+	</bean>
+
+	<bean id="cbmjac.migration.retrieveTPAN" class="com.telstra.olb.tegcbm.job.migration.panconversion.activity.RetrieveTPANActivity">
+		<property name="name">
+			<value>cbmjac.migration.retrieveTPAN</value>
+		</property>
+		<property name="properties">
+			<ref local="panConversion.properties"/>
+		</property>
+		<property name="creditCardDao">
+			<ref local="cbmjac.creditCardDao"/>
+		</property>
+	</bean>
+
+	
+	<bean id="cbmjac.creditCardDao" class="com.telstra.olb.tegcbm.job.migration.panconversion.dao.CreditCardDaoSpringJdbcImpl">
+		<property name="jdbcTemplate"><ref bean="cbmjac.billpay.jdbcTemplate"/></property>		
+	</bean>
+</beans>

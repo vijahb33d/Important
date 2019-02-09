@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD//EN"
+        "http://hibernate.sourceforge.net/hibernate-mapping-2.0.dtd">
+<hibernate-mapping auto-import="true"
+	package="com.telstra.olb.tegcbm.billdownload.model">
+	<class name="OLBRequestStatus" table="OLB_REQUEST_STATUS_TYPE"
+		lazy="false">
+		<id name="id" column="ID">
+			<generator class="native" />
+		</id>
+		<property name="description" column="DESCRIPTION"
+			type="string" not-null="true" />
+	</class>
+</hibernate-mapping>

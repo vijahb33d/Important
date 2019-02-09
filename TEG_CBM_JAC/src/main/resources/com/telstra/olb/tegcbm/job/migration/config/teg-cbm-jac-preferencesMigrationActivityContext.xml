@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans default-lazy-init="true">
+
+	<bean id="cbmjac.migrate.preferences.activity" class="com.telstra.olb.tegcbm.job.migration.pref.activity.PreferencesMigrationActivity">
+		<property name="name">
+			<value>cbmjac.migrate.preferences</value>
+		</property>
+		<property name="inputValidator">
+			<ref bean="cbmjac.migration.activity.inputvalidator"/>
+		</property>
+		<property name="dataProvider">
+			<ref bean="cbmjac.migration.activity.dataprovider"/>
+		</property>
+		<property name="cbmPreferencesDao">
+			<ref local="cbmjac.migrate.preferences.activity.cbmPreferencesDao"/>
+		</property>
+		<property name="preferencesDao">
+			<ref local="cbmjac.migrate.preferences.activity.pdbPreferencesDao"/>
+		</property>
+		<property name="activityListeners">
+			<list>
+				<ref bean="cbmjac.activity.status.processing"/>
+				<ref bean="cbmjac.activity.status.complete"/>
+				<ref bean="cbmjac.activity.status.error"/>
+				<ref bean="cbmjac.job.error"/>
+			</list>
+		</property>
+		<property name="nextActivity">
+			<ref bean="cbmjac.tbuEnrol.pab.cleanup.activity"/>
+		</property>
+	</bean>
+	
+	<bean id="cbmjac.tbuEnrol.preferences.activity" parent="cbmjac.migrate.preferences.activity">
+		<property name="name">
+			<value>cbmjac.migrate.preferences</value>
+		</property>
+		<property name="nextActivity">
+			<ref bean ="cbmjac.tbuEnrol.pab.cleanup.activity"/>
+		</property>
+	</bean>
+	
+	<!-- PDB Dao for Preferences Migration Activity -->
+	<bean id="cbmjac.migrate.preferences.activity.pdb.TransactionInterceptor" class="org.springframework.transaction.interceptor.TransactionInterceptor">
+		<property name="transactionManager">
+        	<bean class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+  				<property name="dataSource" ref="cbmjac.pdb.jdbc.DataSource"/>
+			</bean>
+        </property>
+        <property name="transactionAttributeSource">
+            <bean class="org.springframework.transaction.interceptor.NameMatchTransactionAttributeSource">
+                <property name="properties">
+                    <props>
+                      <prop key="get*">PROPAGATION_SUPPORTS,readOnly</prop>
+                      <prop key="update*">PROPAGATION_REQUIRED, -Exception</prop>
+                      <prop key="delete*">PROPAGATION_REQUIRED, -Exception</prop>
+                      <prop key="backup*">PROPAGATION_REQUIRED, -Exception</prop>
+                    </props>
+                </property>
+            </bean>
+        </property>
+	</bean>
+	
+	<bean id="cbmjac.migrate.preferences.activity.pdbPreferencesDao" class="org.springframework.aop.framework.ProxyFactoryBean">
+        <property name="interfaces">
+        	<list>
+            	<value>com.telstra.olb.tegcbm.job.migration.pref.dao.PDBPreferencesDAO</value>
+        	</list>
+        </property>
+        <property name="target">
+            <ref local="cbmjac.migrate.preferences.activity.pdbPreferencesDao.target"/>
+        </property>
+        <property name="interceptorNames">
+            <list>
+                <value>cbmjac.migrate.preferences.activity.pdb.TransactionInterceptor</value>
+            </list>
+        </property>
+    </bean>
+	
+   	<bean id="cbmjac.migrate.preferences.activity.pdbPreferencesDao.target" class="com.telstra.olb.tegcbm.job.migration.pref.dao.PDBPreferencesDAOSpringJdbcImpl">
+		<property name="jdbcTemplate"><ref bean="cbmjac.pdb.jdbcTemplate"/></property>
+	</bean>
+   
+	<!-- CBM Preferences Dao -->
+	<bean id="cbmjac.migrate.preferences.activity.edx.TransactionInterceptor" class="org.springframework.transaction.interceptor.TransactionInterceptor">
+		<property name="transactionManager">
+        	<bean class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+  				<property name="dataSource" ref="cbmjac.pdb.jdbc.DataSource"/>
+			</bean>
+        </property>
+        <property name="transactionAttributeSource">
+            <bean class="org.springframework.transaction.interceptor.NameMatchTransactionAttributeSource">
+                <property name="properties">
+                    <props>
+                      <prop key="update*">PROPAGATION_REQUIRED, -Exception</prop>
+                    </props>
+                </property>
+            </bean>
+        </property>
+	</bean>
+	
+	<bean id="cbmjac.migrate.preferences.activity.cbmPreferencesDao" class="org.springframework.aop.framework.ProxyFactoryBean">
+        <property name="interfaces">
+        	<list>
+            	<value>com.telstra.olb.tegcbm.job.migration.pref.dao.CBMPreferencesDAO</value>
+        	</list>
+        </property>
+        <property name="target">
+            <ref local="cbmjac.migrate.preferences.activity.cbmPreferencesDao.target"/>
+        </property>
+        <property name="interceptorNames">
+            <list>
+                <value>cbmjac.migrate.preferences.activity.edx.TransactionInterceptor</value>
+            </list>
+        </property>
+    </bean>
+    
+   	<bean id="cbmjac.migrate.preferences.activity.cbmPreferencesDao.target" class="com.telstra.olb.tegcbm.job.migration.pref.dao.CBMPreferencesDAOSpringJdbcImpl">
+		<property name="jdbcTemplate"><ref bean="cbmjac.cbm.jdbcTemplate"/></property>
+	</bean>
+</beans>

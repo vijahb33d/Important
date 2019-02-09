@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans default-lazy-init="true">
+	<!-- Validation Manager -->
+	<bean id="cbmjac.validate.manager" class="com.telstra.olb.tegcbm.job.core.DefaultManagerImpl">
+		<property name="usage">
+			<value><![CDATA[validate [companyList={list of companies seperated by commas}] OR
+									
+									 [companyList={seed}]
+									 [companySize={max number of companies to be validated}]]]></value>
+		</property>
+		<property name="jobs">
+			<list>
+				<ref bean="cbmjac.migrate.validate.activity"/>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="cbmjac.migrate.validate.activity.dataprovider" class="com.telstra.olb.tegcbm.job.migration.validation.data.MigrationValidationDataProvider">
+		<property name="migrationDao">
+			<ref bean="cm.migrationDAO"/>
+		</property>
+	</bean>
+	
+	
+	<!-- Validation activity -->
+	<bean id="cbmjac.migrate.validate.activity" class="com.telstra.olb.tegcbm.job.migration.validation.activity.MigrationValidationActivity">
+		<property name="name">
+			<value>cbmjac.migrate.validate</value>
+		</property>
+		<property name="cbmDao">
+			<ref bean="cm.cbmDao"/>
+		</property>
+		<property name="pdbDao">
+			<ref local="cm.pdbDao"/>
+		</property>
+		<property name="dataProvider">
+			<ref bean="cbmjac.migrate.validate.activity.dataprovider"/>
+		</property>
+		<property name="validatingMethods">
+			<list>
+				<value>COMPANY_ATTRIBUTES_SQL</value>
+				<value>COMPANY_USERS_SQL</value>
+				<value>COMPANY_ACCOUNTS_SQL</value>
+				<value>COMPANY_SERVICES_SQL</value>
+				<value>COMPANY_ACCOUNT_SERVICES_SQL</value>
+			</list>
+		</property>
+		<property name="resultComparator">
+			<ref local="cm.resultComparator"/>
+		</property>
+	</bean>
+	
+	
+	<!-- PDB Dao for Profile Migration Activity -->
+   	<bean id="cm.pdbDao" class="com.telstra.olb.tegcbm.job.migration.validation.dao.PDBValidateDAOSpringJdbcImpl">
+		<property name="jdbcTemplate"><ref bean="cbmjac.pdb.jdbcTemplate"/></property>
+	</bean>
+	
+	
+	<!-- CBM Dao for Profile Migration Validation Activity -->
+	<bean id="cm.cbmDao" class="com.telstra.olb.tegcbm.job.migration.validation.dao.CBMValidateDAOSpringJdbcImpl">
+		<property name="jdbcTemplate"><ref bean="cbmjac.cbm.jdbcTemplate"/></property>
+	</bean>
+	
+	<bean id="cm.resultComparator" class="com.telstra.olb.tegcbm.job.migration.validation.comparators.ResultComparator" />
+	
+
+</beans>

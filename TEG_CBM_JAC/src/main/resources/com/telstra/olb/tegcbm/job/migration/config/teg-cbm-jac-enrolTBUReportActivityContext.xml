@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans default-lazy-init="true">
+	<bean id="cbmjac.tbuEnrol.report.activity" class="com.telstra.olb.tegcbm.job.migration.reporting.activity.GenerateReportActivity">
+		<property name="name">
+			<value>cbmjac.tbuEnrol.report</value>
+		</property>
+		<property name="dataProvider">
+			<ref bean="cbmjac.migration.status.dataprovider"/>
+		</property>
+		<property name="csvPath">
+			<value>/opt/WebSphere/AppServer/migration/cbm2bp_report/</value>
+		</property>
+		<property name="activityListeners">
+			<list>
+				<ref bean="cbmjac.activity.status.processing"/>
+				<ref bean="cbmjac.activity.status.complete"/>
+				<ref bean="cbmjac.activity.status.error"/>
+			</list>
+		</property>
+		<property name="nextActivity">
+			<null/>
+		</property>
+	</bean>
+	
+	<bean id="cbmjac.migration.status.dataprovider" class="com.telstra.olb.tegcbm.job.migration.data.MigrationStatusDataProvider">
+		<property name="migrationDao">
+			<ref bean="cm.migrationDAO"/>
+		</property>
+		<property name="processActivityStatus">
+			<list>
+				<value>complete</value>
+			</list>
+		</property>
+		<property name="returnInGroups" value="true"/>
+	</bean>
+</beans>

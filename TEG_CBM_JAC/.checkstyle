@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><fileset-config file-format-version="1.1.0" simple-config="true">
+<fileset name="all" enabled="true" check-config-name="OLB Coding Standards" type="external" location="D:\data\OLBS\Projects\TEG_CBM (TEG_R1-BRANCH)\CBM\TEG_CBM_ANT\resources\OLB_Coding_Standards_CheckStyle.xml" description=""><file-match-pattern match-pattern="." include-pattern="true"/>
+</fileset>
+<filter name="FilesFromPackage" enabled="true"><filter-data value="src/test/java"/>
+</filter>
+</fileset-config>

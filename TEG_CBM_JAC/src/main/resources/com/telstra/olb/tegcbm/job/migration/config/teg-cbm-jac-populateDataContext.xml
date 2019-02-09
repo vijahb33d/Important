@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans default-lazy-init="true">
+	<import resource="classpath:/com/telstra/olb/tegcbm/job/migration/config/teg-cbm-jac-tbuEnrolContext.xml"/>
+	
+	<bean id="cbmjac.populate.manager" class="com.telstra.olb.tegcbm.job.core.DefaultManagerImpl">
+		<property name="usage">
+			<value>
+				<![CDATA[populate migrationType={list of migrationTypes seperated by commas.}\n
+				The available ones are ENTERPRISE, SME, TBU ]]>
+			</value>
+		</property>
+		<property name="jobs">
+			<list>
+				<ref local="cbmjac.populate.XSactivity"/>
+						
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="cbmjac.populate.activity.dataprovider" class="com.telstra.olb.tegcbm.job.migration.data.MigrationTypeDataProvider">
+		<property name="migrationTypes">
+			<list>
+				<bean class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean">
+					<property name="staticField">
+						<value>com.telstra.olb.tegcbm.job.migration.populate.model.MigrationType.ENTERPRISE</value>
+					</property>
+				</bean>
+				<bean class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean">
+					<property name="staticField">
+						<value>com.telstra.olb.tegcbm.job.migration.populate.model.MigrationType.SME</value>
+					</property>
+				</bean>
+				<bean class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean">
+					<property name="staticField">
+						<value>com.telstra.olb.tegcbm.job.migration.populate.model.MigrationType.TBU</value>
+					</property>
+				</bean>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="cbmjac.populate.activity" class="com.telstra.olb.tegcbm.job.migration.populate.activity.PopulateActivity">
+		<property name="name">
+			<value>cbmjac.populate.populate</value>
+		</property>
+		<property name="olbServicesDao">
+			<ref local="cbmjac.populate.activity.olbServicesDao"/>
+		</property>
+		<property name="pdbDao">
+			<ref local="cbmjac.populate.activity.pdbDao"/>
+		</property>
+		<property name="migrationDao">
+			<ref bean="cm.migrationDAO"/>
+		</property>
+		<property name="dataProvider">
+			<ref bean="cbmjac.populate.activity.dataprovider"/>
+		</property>
+		<property name="activityListeners">
+			<list/>
+		</property>
+		<property name="nextActivity">
+			<null/>
+		</property>
+	</bean>
+	
+	<bean id="cbmjac.populate.XSactivity" class="com.telstra.olb.tegcbm.job.migration.populate.activity.PopulateXSchemaActivity">
+		<property name="name">
+			<value>cbmjac.populate.populate</value>
+		</property>
+		<property name="populateDao">
+			<ref local="cbmjac.populate.activity.populateDao"/>
+		</property>
+		<property name="migrationDao">
+			<ref bean="cm.migrationDAO"/>
+		</property>
+		<property name="dataProvider">
+			<ref bean="cbmjac.populate.activity.dataprovider"/>
+		</property>
+		<property name="activityListeners">
+			<list/>
+		</property>
+		<property name="nextActivity">
+			<null/>
+		</property>
+	</bean>
+	
+	<bean id="cbmjac.populate.activity.olb.TransactionInterceptor" class="org.springframework.transaction.interceptor.TransactionInterceptor">
+		<property name="transactionManager">
+        	<bean class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+  				<property name="dataSource" ref="cbmjac.olb.jdbc.DataSource"/>
+			</bean>
+        </property>
+        <property name="transactionAttributeSource">
+            <bean class="org.springframework.transaction.interceptor.NameMatchTransactionAttributeSource">
+                <property name="properties">
+                    <props>
+                      <prop key="get*">PROPAGATION_SUPPORTS,readOnly</prop>
+                    </props>
+                </property>
+            </bean>
+        </property>
+	</bean>
+	
+	<bean id="cbmjac.populate.activity.olbServicesDao" class="org.springframework.aop.framework.ProxyFactoryBean">
+        <property name="interfaces">
+        	<list>
+            	<value>com.telstra.olb.tegcbm.job.migration.populate.dao.OlbDao</value>
+        	</list>
+        </property>
+        <property name="target">
+            <ref local="cbmjac.populate.activity.olbServicesDao.target"/>
+        </property>
+        <property name="interceptorNames">
+            <list>
+                <value>cbmjac.populate.activity.olb.TransactionInterceptor</value>
+            </list>
+        </property>
+    </bean>
+	
+	<bean id="cbmjac.populate.activity.olbServicesDao.target" class="com.telstra.olb.tegcbm.job.migration.populate.dao.OlbDaoSpringJdbcImpl">
+		<property name="jdbcTemplate"><ref bean="cbmjac.olb.jdbcTemplate"/></property>
+	</bean>
+	
+	<bean id="cbmjac.populate.activity.pdb.TransactionInterceptor" class="org.springframework.transaction.interceptor.TransactionInterceptor">
+		<property name="transactionManager">
+        	<bean class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+  				<property name="dataSource" ref="cbmjac.pdb.jdbc.DataSource"/>
+			</bean>
+        </property>
+        <property name="transactionAttributeSource">
+            <bean class="org.springframework.transaction.interceptor.NameMatchTransactionAttributeSource">
+                <property name="properties">
+                    <props>
+                      <prop key="get*">PROPAGATION_SUPPORTS,readOnly</prop>
+                    </props>
+                </property>
+            </bean>
+        </property>
+	</bean>
+	
+	<bean id="cbmjac.populate.activity.pdbDao" class="org.springframework.aop.framework.ProxyFactoryBean">
+        <property name="interfaces">
+        	<list>
+            	<value>com.telstra.olb.tegcbm.job.migration.populate.dao.PdbDao</value>
+        	</list>
+        </property>
+        <property name="target">
+            <ref local="cbmjac.populate.activity.pdbDao.target"/>
+        </property>
+        <property name="interceptorNames">
+            <list>
+                <value>cbmjac.populate.activity.pdb.TransactionInterceptor</value>
+            </list>
+        </property>
+    </bean>
+   
+    <bean id="cbmjac.populate.activity.pdbDao.target" class="com.telstra.olb.tegcbm.job.migration.populate.dao.PdbDaoSpringJdbcImpl">
+		<property name="jdbcTemplate"><ref bean="cbmjac.pdb.jdbcTemplate"/></property>
+	</bean>
+	
+	<bean id="cbmjac.populate.activity.populateDao" class="org.springframework.aop.framework.ProxyFactoryBean">
+        <property name="interfaces">
+        	<list>
+            	<value>com.telstra.olb.tegcbm.job.migration.populate.dao.PopulateDao</value>
+        	</list>
+        </property>
+        <property name="target">
+            <ref local="cbmjac.populate.activity.populateDao.target"/>
+        </property>
+        <property name="interceptorNames">
+            <list>
+                <value>cbmjac.populate.activity.pdb.TransactionInterceptor</value>
+            </list>
+        </property>
+    </bean>
+    
+    <bean id="cbmjac.populate.activity.populateDao.target" class="com.telstra.olb.tegcbm.job.migration.populate.dao.PopulateDaoSpringJdbcImpl">
+		<property name="jdbcTemplate"><ref bean="cbmjac.cbm.jdbcTemplate"/></property>
+		<property name="sqls">
+			<map>
+				<entry key="ENTERPRISE.SQL">
+					<value>
+						<![CDATA[
+						  SELECT DISTINCT C.CIDN AS CIDN, C.VALUE AS OWN_CODE, OC.SEGMENT AS SEGMENT
+						  FROM PDB_DBA.PDB_CUSTOMER_VALUES_T C
+						   		INNER JOIN (SELECT OWN_CODE, SEGMENT FROM OLB_DBA.OLB_CATEGORY_T                                            
+					         		  	   	WHERE SEGMENT IN ('Key-Corporate', 'International')
+					         	) OC ON C.VALUE = OC.OWN_CODE                                            
+						        INNER JOIN (SELECT DISTINCT PA.CIDN 
+								   	  		FROM PDB_DBA.PDB_ACCOUNT_VALUES_T PA
+							       				INNER JOIN OLB_DBA.BFM_ACCOUNT_STATUS_T BA ON  PA.ACCOUNT_NUMBER = BA.ACC_NUM
+						 		) B ON C.CIDN=B.CIDN
+						 WHERE C.ATTRIBUTE_ID='ownership_code'
+						]]>
+					</value>
+				</entry>
+				<entry key="SME.SQL">
+					<value>
+						<![CDATA[
+						  SELECT DISTINCT C.CIDN AS CIDN, C.VALUE AS OWN_CODE, OC.SEGMENT AS SEGMENT
+						  FROM PDB_DBA.PDB_CUSTOMER_VALUES_T C
+						   		INNER JOIN (SELECT OWN_CODE, SEGMENT FROM OLB_DBA.OLB_CATEGORY_T                                            
+					         		  	   	WHERE SEGMENT IN ('SmallBusiness', 'SME')
+					         	) OC ON C.VALUE = OC.OWN_CODE                                            
+						        INNER JOIN (SELECT DISTINCT PA.CIDN 
+								   	  		FROM PDB_DBA.PDB_ACCOUNT_VALUES_T PA
+							       				INNER JOIN OLB_DBA.BFM_ACCOUNT_STATUS_T BA ON  PA.ACCOUNT_NUMBER = BA.ACC_NUM
+						 		) B ON C.CIDN=B.CIDN
+						 WHERE C.ATTRIBUTE_ID='ownership_code'
+						]]>
+					</value>
+				</entry>
+				<entry key="TBU.SQL">
+					<value>
+						<![CDATA[
+						 SELECT DISTINCT C.CIDN AS CIDN,C.VALUE AS OWN_CODE,OC.SEGMENT AS SEGMENT
+                         FROM PDB_DBA.PDB_CUSTOMER_VALUES_T C,
+                            (SELECT OWN_CODE,SEGMENT FROM OLB_DBA.OLB_CATEGORY_T
+                             WHERE segment = 'SmallBusiness'AND macro_segment = 'SME' AND category = 'ConsSme') OC,
+                        	(SELECT DISTINCT PA.CIDN FROM PDB_DBA.PDB_ACCOUNT_VALUES_T PA
+                               INNER JOIN OLB_DBA.BFM_ACCOUNT_STATUS_T BA
+                               ON PA.ACCOUNT_NUMBER = BA.ACC_NUM ) B
+                         WHERE     C.VALUE = OC.OWN_CODE
+                                  AND C.CIDN = B.CIDN
+                                  AND C.ATTRIBUTE_ID = 'ownership_code'
+						]]>
+					</value>
+				</entry>
+			</map>
+		</property>
+	</bean>
+	
+	
+</beans>

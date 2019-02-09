@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+
+<!-- 
+Use accountNumber and documentNumber to match the response. 
+FileLocation will only be returned if errorCode is blank.
+-->
+
+<SalmatPdfVO-TestData>
+
+	<SalmatPdfVO>
+		<billingAccountCode>1234567890</billingAccountCode>
+		<billNumber>A123456789</billNumber>
+		<fileLocation>stub/GetDocumentPdf-TestFile.pdf</fileLocation>
+		<exceptionCode></exceptionCode>
+	</SalmatPdfVO>
+
+	<SalmatPdfVO>
+		<billingAccountCode>1234567891</billingAccountCode>
+		<billNumber>A123456789</billNumber>
+		<fileLocation>stub/GetDocumentPdf-TestFile.pdf</fileLocation>
+		<exceptionCode>002</exceptionCode>
+	</SalmatPdfVO>
+
+	<SalmatPdfVO>
+		<billingAccountCode>1234567892</billingAccountCode>
+		<billNumber>T123456789</billNumber>
+		<fileLocation>stub/GetDocumentPdf-TestFile.pdf</fileLocation>
+		<exceptionCode>003</exceptionCode>
+	</SalmatPdfVO>
+
+	<SalmatPdfVO>
+		<billingAccountCode>1234567893</billingAccountCode>
+		<billNumber>B123456789</billNumber>
+		<fileLocation>stub/GetDocumentPdf-TestFile.pdf</fileLocation>
+		<exceptionCode>004</exceptionCode>
+	</SalmatPdfVO>
+
+	<SalmatPdfVO>
+		<billingAccountCode>1234567895</billingAccountCode>
+		<billNumber>C123456789</billNumber>
+		<fileLocation>stub/GetDocumentPdf-TestFile.pdf</fileLocation>
+		<exceptionCode>005</exceptionCode>
+	</SalmatPdfVO>
+
+</SalmatPdfVO-TestData>
